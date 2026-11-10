@@ -1,0 +1,60 @@
+# ===== CONFIGURACIÓN (reinicia la app tras cambiarla) =====
+[model]
+path = "assets/mascota.gltf" # Modelo del proyecto web: textura embebida y clips idle/jump/walk
+heading_degrees = 0        # giro para que mire a la pantalla (prueba 90, 180 o -90)
+
+[animations]               # nombres de los clips tal y como están en Blender
+reposo = ["reposo", "idle"]
+saludo = ["saludo", "jump", "waving"]
+caminar = ["walk", "walking"]
+
+[camera]
+index = 0                  # 0 = primera cámara; prueba 1, 2... si hay varias
+width = 640
+height = 480
+starting_timeout_seconds = 10.0  # pasar a manual si el driver no responde
+
+[detection]
+auto_start = true          # false = arrancar en modo manual
+interval_ms = 150          # cada cuánto se analiza un fotograma
+min_visibility = 0.5       # confianza mínima de nariz y hombros (0-1)
+min_shoulder_width = 0.10  # anchura mínima de hombros (0-1). Súbelo para ignorar a quien pasa lejos
+pose_model = "assets/pose_landmarker_lite.task"   # se descarga solo la primera vez
+
+[timing]
+detect_seconds = 0.8       # presencia estable antes de saludar
+reset_seconds = 4.0        # sin nadie este tiempo -> reposo y permite saludar de nuevo
+greeting_cooldown_seconds = 8.0  # respaldo temporal; una ausencia confirmada rearma el saludo
+lost_tolerance_seconds = 0.5     # tras este tiempo sin detección se rearma; filtra pérdidas más breves
+
+[gestures]                 # reconocimiento de gestos de mano (MediaPipe Gesture Recognizer)
+enabled = true             # false = solo detección de personas
+model = "assets/gesture_recognizer.task"
+min_confidence = 0.6       # confianza mínima del detector (0-1)
+confirm_seconds = 0.6      # el gesto debe mantenerse estable antes de actuar
+cooldown_seconds = 3.0     # espera mínima entre acciones por gesto
+release_seconds = 0.7      # tiempo sin gesto para rearmar la misma acción
+walk_seconds = 4.0         # duración de caminar antes de volver a reposo
+
+[gestures.actions]         # acción asignada a cada gesto reconocido
+palma_abierta = "saludo"
+puno_cerrado = "caminar"
+dedo_arriba = "ninguna"
+pulgar_arriba = "ninguna"
+pulgar_abajo = "ninguna"
+victoria = "ninguna"
+te_quiero = "ninguna"
+
+[window]
+fullscreen = true          # ventana sin bordes a pantalla completa (F11 la alterna)
+font = ""                  # opcional: ruta a un .ttf. Vacío = Segoe UI/Arial de Windows
+
+[render]
+ambient = 0.9              # luz ambiente (el GLB usa materiales "unlit")
+directional = 0.4
+
+[messages]
+idle = "Acércate para saludar"
+hello = "¡Hola!"
+after = "¡Disfruta de la feria!"
+manual = "Modo manual"

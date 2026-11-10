@@ -1,0 +1,7 @@
+El modelo activo se configura en config.toml. Por defecto es assets/mascota.gltf,
+que incluye los clips idle, jump y walk y una textura embebida.
+
+assets/mascota.glb es una alternativa del modelo, pero no incluye animaciones.
+Si cambias config.toml para usar ese archivo, la mascota se verá, pero no tendrá
+clips reales para reposo o saludo. Exporta de nuevo desde Blender con las acciones
+incluidas para disponer de esas animaciones.
