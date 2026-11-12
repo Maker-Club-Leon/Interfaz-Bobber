@@ -1,0 +1,63 @@
+# Hoja de ruta de Bobber
+
+## Estado actual
+
+La aplicación de escritorio funciona como prototipo integrado: presenta la mascota, detecta presencia, reconoce gestos de una mano y ofrece modo manual. El repositorio incluye modelos, configuración, scripts de Windows, documentación y pruebas de lógica.
+
+### Hecho
+
+- Ventana de escritorio Panda3D con controles manuales, ventana/pantalla completa y mensajes de estado.
+- Carga de glTF/GLB y reproducción de clips; el archivo activo `mascota.gltf` contiene `idle`, `jump` y `walk`.
+- Captura local OpenCV con MediaPipe Pose para estimar presencia por nariz y hombros.
+- MediaPipe Gesture Recognizer conectado al mismo flujo de cámara: palma abierta → saludo; puño cerrado → caminar.
+- Confirmación, cooldown y liberación de gesto para reducir activaciones accidentales.
+- Prioridad de acciones para que presencia y gestos no se solapen con controles manuales.
+- Modo manual de respaldo, tiempo máximo de inicio de cámara, limpieza de recursos y vista de calibración.
+- Modelos de pose y gestos incluidos en `assets`; comando para recuperarlos si faltan.
+- Configuración en `config.toml`, instalación con `run.bat`, `selftest.py` y pruebas unitarias de lógica/modelo.
+- `.gitignore` con patrones para entorno Python, cachés, builds, archivos de sistema y secretos locales.
+
+### Limitaciones conocidas
+
+- `jump` es un salto que se usa como saludo provisional. Falta crear/exportar una animación real `saludo` (por ejemplo, levantar y mover la pata).
+- La aplicación está ajustada para una cámara y una mano. Los tiempos de análisis y umbrales deben calibrarse en el stand real, con su iluminación y distancia.
+- El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
+- El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
+- No hay todavía una licencia del proyecto ni una nota formal de licencias/atribuciones de los modelos y dependencias.
+- Aunque existe `.gitignore`, el índice de Git conserva aproximadamente 6.986 archivos de `.venv` y siete archivos de `mascota/__pycache__`. Ignorarlos no los quita del índice.
+
+## Prioridad 0 — dejar el repositorio listo para GitHub
+
+- [ ] Revisar `git status` y confirmar el estado de la rama/remoto antes de alterar el índice.
+- [ ] Quitar del índice `.venv` y bytecode sin borrar las copias locales: `git rm -r --cached .venv mascota/__pycache__`.
+- [ ] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
+- [ ] Decidir si se publican ambos modelos. `mascota.gltf` es el activo; `mascota.glb` es una alternativa sin animaciones.
+- [ ] Confirmar derecho de redistribución y atribuciones de `gesture_recognizer.task`, `pose_landmarker_lite.task` y los assets de Bobber. Si no se publican los `.task`, documentar claramente cómo descargarlos.
+- [ ] Elegir una licencia para el código y añadir el archivo correspondiente antes de presentar el repositorio como reutilizable.
+
+## Prioridad 1 — validar en las condiciones de la feria
+
+- [ ] Instalar desde cero en un PC Windows limpio usando solo el README y `run.bat`.
+- [ ] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest`.
+- [ ] Probar la webcam real: permisos, cambio a manual, cierre/reintento, distancia de detección y recuperación tras ausencias.
+- [ ] Calibrar iluminación, encuadre, `min_shoulder_width`, `min_visibility` y `interval_ms` en el stand.
+- [ ] Probar palma y puño varias veces, y comprobar cooldown, retirada de mano y ausencia de solapamiento.
+- [ ] Medir FPS/temperatura durante una sesión prolongada y ajustar intervalos o resolución si hace falta.
+- [ ] Definir un procedimiento de arranque y un plan manual si la cámara o el modelo fallan.
+
+## Prioridad 2 — mejorar la interacción
+
+- [ ] Crear y exportar clips reales `saludo` y `reposo` en Blender; mantener `walk` para el gesto de puño.
+- [ ] Actualizar `[animations]` y la documentación cuando los clips nuevos estén dentro del modelo.
+- [ ] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
+- [ ] Revisar el encuadre/orientación en el monitor del stand y fijar `heading_degrees`.
+- [ ] Preparar una captura o vídeo corto para el README y una guía de solución de problemas basada en pruebas reales.
+
+## Criterios para considerar lista una versión de feria
+
+- Arranca en el equipo elegido sin editar código y encuentra todos los assets necesarios.
+- La mascota mira al público, permanece en reposo y ejecuta un saludo real al detectar presencia o palma.
+- El gesto de puño ejecuta caminar, si ese clip se conserva; una acción ausente muestra un aviso claro.
+- El modo manual sigue siendo usable aunque no haya cámara o falle un reconocedor.
+- Una sola cámara queda abierta y se libera al cerrar; los fotogramas no se guardan ni se transmiten.
+- El repositorio no contiene entorno virtual, cachés, secretos ni archivos sin licencia revisada.

@@ -1,115 +1,162 @@
-# Mascota de la feria (versión Python)
+# Bobber — mascota interactiva para ferias
 
-Ventana de escritorio con tu modelo glTF de Blender (Panda3D) que saluda cuando la cámara (OpenCV + MediaPipe)
-detecta a alguien. Todo es local: no se identifica a nadie y **no se guardan ni envían imágenes**
-(los fotogramas solo existen en memoria). Los modelos de detección vienen incluidos; internet solo hace falta
-para instalar dependencias o volver a descargar un modelo si falta.
+Aplicación de escritorio en Python que muestra una mascota 3D y reacciona cuando alguien se acerca a la cámara o hace un gesto con la mano. Está pensada para funcionar en un stand, con controles manuales disponibles si la cámara falla.
 
-## Qué hay en tu modelo (inspeccionado)
-`assets/mascota.gltf`: modelo autocontenido con esqueleto, una malla, un material, una imagen y tres animaciones:
-`idle`, `jump`, `walk`. La configuración usa `idle` para reposo, `jump` como saludo y `walk` para caminar.
-`jump` es un salto, no un movimiento de mano saludando; para un saludo real crea un clip `saludo` en Blender y cambia `[animations] saludo`.
+El procesamiento de cámara se hace en el propio ordenador. La aplicación no identifica personas, no guarda imágenes ni envía fotogramas a internet.
 
-## Instalar y ejecutar (Windows 10/11)
-1. Instala **Python 3.11 o 3.12 de 64 bits** (python.org; marca "Add to PATH"). MediaPipe aún no declara soporte para 3.13+.
-2. Descomprime esta carpeta (no toca el proyecto web).
-3. Haz doble clic en **`run.bat`**. La primera vez crea `.venv` e instala dependencias (necesita internet, unos minutos).
-4. Los modelos de pose y gestos vienen incluidos. Si falta alguno, con internet ejecuta `run.bat --descargar-modelos` para recuperarlo; después la app funciona sin internet.
-5. Opciones: `run.bat --selftest` (prueba), `run.bat --calibrar` (ver la detección), `run.bat --manual`, `run.bat --ventana`, `run.bat --descargar-modelos`.
+## Qué hace
 
-## Uso
-Botones: Reposo, Saludo, Caminar, Auto/Manual, Calibración, Pantalla. Teclas: `1` reposo · `2` saludo · `3` caminar · `M` auto/manual ·
-`C` calibración (vista previa de cámara con nariz y hombros + valores) · `F11` pantalla completa/ventana · `Esc`/`Q` salir.
-Si la cámara falla, está ocupada o no hay permiso, pasa sola a **modo manual** y muestra el motivo.
+- Muestra la mascota 3D usando Panda3D y carga modelos glTF/GLB.
+- Detecta presencia con MediaPipe Pose a partir de la nariz y los hombros.
+- Reconoce gestos de una mano con MediaPipe Gesture Recognizer.
+- Saluda tras una presencia estable y rearma el saludo cuando la persona deja de detectarse durante el tiempo configurado.
+- Ejecuta acciones por gestos, con confirmación, cooldown y liberación para evitar repeticiones accidentales.
+- Mantiene una sola captura de cámara y procesa la imagen en un hilo de fondo.
+- Tiene modo manual, calibración visual, pantalla completa y una prueba de diagnóstico.
 
-## Gestos de mano
-Además de saludar cuando hay una persona, la mascota reacciona a gestos de **una mano**. Usa el *Gesture Recognizer*
-de MediaPipe (mismo paquete `mediapipe` y misma API *Tasks* que el detector de poses; sin dependencias nuevas), en el
-**mismo hilo y con el mismo fotograma** de la cámara: no se abre una segunda cámara y la interfaz no se bloquea.
-Todo local; no se guardan ni envían imágenes.
+## Interacción y prioridad
 
-| Gesto | Acción por defecto |
-|---|---|
-| Palma abierta | `saludo` |
-| Puño cerrado | `caminar` (usa el clip `walk` de este modelo) |
-| Sin mano / sin gesto reconocido | ninguna |
-| Dedo arriba, pulgar arriba/abajo, victoria, te quiero | disponibles, asignados a `ninguna` |
+```mermaid
+flowchart LR
+    C[Cámara local] --> F[Un fotograma en memoria]
+    F --> P[Presencia: nariz y hombros]
+    F --> G[Mano: gesto reconocido]
+    P --> A[Prioridad y estado de acción]
+    G --> A
+    M[Botones y teclado] --> A
+    A --> R[Animación de la mascota]
+```
 
-**Modelo adicional (`gesture_recognizer.task`, unos 8 MB).** Está incluido en `assets`. No se descarga durante el uso. Si falta, recupéralo con
-`run.bat --descargar-modelos` o a mano desde
-https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/latest/gesture_recognizer.task
-(documentación: https://ai.google.dev/edge/mediapipe/solutions/vision/gesture_recognizer/python) y guárdalo como
-`assets/gesture_recognizer.task`. Si falta, los gestos se desactivan con un aviso; la detección de personas y el modo manual siguen funcionando.
+Los controles manuales tienen prioridad sobre los gestos, y los gestos sobre el saludo automático por presencia. La detección de persona y de mano usa la misma cámara y el mismo fotograma.
 
-**Cómo se evitan activaciones accidentales**
-1. El gesto debe mantenerse estable `confirm_seconds`.
-2. Entre dos acciones por gesto pasan al menos `cooldown_seconds`.
-3. Tras actuar, el *mismo* gesto no se repite hasta que retires la mano (o dejes de hacer un gesto reconocido) `release_seconds`; después queda listo para el siguiente. Un gesto *distinto* puede activarse cuando acabe la espera.
+## Modelo y animaciones
 
-**Prioridades (persona vs. gesto):** botones/teclas manuales > gesto > presencia. La presencia nunca interrumpe una
-acción en curso (si hay un gesto en marcha, el saludo automático se omite). Un gesto puede interrumpir el saludo por presencia, pero
-no a otra acción de gesto hasta que termine. Así las animaciones no se solapan.
+El modelo activo es `assets/mascota.gltf`. El archivo incluye sus datos y una textura, y contiene estos clips:
 
-El saludo se rearma cuando la cámara deja de detectar a la persona durante `lost_tolerance_seconds` (0,5 s por defecto).
-Esto permite saludar de nuevo al volver a aparecer sin esperar los 4 s de `reset_seconds`, que solo controla cuándo la mascota vuelve a reposo.
+| Clip del modelo | Uso en la aplicación |
+| --- | --- |
+| `idle` | Reposo |
+| `jump` | Saludo provisional |
+| `walk` | Caminar |
 
-**Estado en pantalla:** barra superior, p. ej. "Mano detectada: palma abierta", "Mano detectada: sin gesto reconocido" o "Sin mano".
-Con `C` (calibración) se ve la cámara con los puntos de la mano, la etiqueta de MediaPipe (`Open_Palm`, `Closed_Fist`…) y su confianza.
+`jump` es un salto, no un saludo con la pata. Para que Bobber salude de verdad, crea una acción `saludo` en Blender y cambia `[animations].saludo` en `config.toml`. `assets/mascota.glb` se conserva como alternativa, pero no incluye animaciones.
 
-### Ajustar en el stand (`[gestures]` en `config.toml`)
-| Clave | Significado | Ajuste |
-|---|---|---|
-| `enabled` | activa/desactiva los gestos | `false` = solo personas |
-| `min_confidence` | confianza mínima (0-1) de mano y gesto | sube a 0.7-0.8 con falsos positivos; baja a 0.4-0.5 si no reconoce |
-| `confirm_seconds` | tiempo que debe mantenerse el gesto | 0.4 rápido · 0.8-1.0 más seguro |
-| `cooldown_seconds` | espera entre acciones | al menos la duración del clip de saludo |
-| `release_seconds` | tiempo sin gesto para poder repetir | 0.5-1.0 |
-| `walk_seconds` | duración de `caminar` antes de volver a reposo | según el clip |
-| `[gestures.actions]` | acción por gesto: `saludo`, `caminar`, `reposo`, `ninguna` | p. ej. `pulgar_arriba = "saludo"` |
-| `[animations] caminar` | nombre del clip de caminar en el glTF/GLB | como en Blender |
+Los gestos vienen configurados así:
 
-Consejos: mano a 40-100 cm, palma o puño de frente a la cámara, fondo poco cargado y buena luz.
+| Gesto | Acción |
+| --- | --- |
+| Palma abierta | Saludo |
+| Puño cerrado | Caminar |
+| Otros gestos reconocidos | Ninguna, hasta asignarles una acción |
 
-## Prueba breve
-`run.bat --selftest` comprueba: lógica de saludo, de gestos y prioridades (sin hardware), lectura del glTF/GLB (animaciones/materiales), carga del modelo en una
-ventana 3D oculta y apertura de cámara + detección y carga del modelo de gestos. Termina con "TODO CORRECTO" o indica qué falla.
+El puño necesita que el modelo tenga un clip de caminar. Si el clip configurado no existe, la aplicación muestra un aviso en vez de inventar una animación.
 
-## Configuración (`config.toml`)
-| Qué | Clave |
-|---|---|
-| Ruta del glTF/GLB / giro si mira de lado | `[model] path`, `heading_degrees` |
-| Nombres de clips | `[animations] reposo`, `saludo` (admite coincidencia parcial, sin mayúsculas) |
-| Cámara | `[camera] index` (0, 1, 2…) |
-| Sensibilidad | `[detection] min_shoulder_width` (más alto = hay que estar más cerca), `min_visibility` |
-| Tiempo para saludar / volver a reposo | `[timing] detect_seconds`, `reset_seconds`, `lost_tolerance_seconds` (rearma tras una ausencia estable) |
-| Gestos (activar, confianza, tiempos, acciones) | `[gestures]` y `[gestures.actions]` (ver Gestos de mano) |
-| Pantalla completa, fuente | `[window] fullscreen`, `font` |
-| Brillo | `[render] ambient`, `directional` |
+## Requisitos
 
-## Crear o cambiar animaciones en Blender
-1. Selecciona el esqueleto del modelo y abre **Dope Sheet → Action Editor**.
-2. Crea acciones llamadas `reposo`, `saludo` y `caminar`; usa los huesos que tenga este modelo. El último fotograma debe coincidir con el primero en las acciones cíclicas.
-3. En todas las acciones activa *Fake User* para conservarlas.
-4. Exporta desde **File → Export → glTF 2.0** con **Animation** activado y el modo **Actions** (o *NLA Tracks* si preparaste pistas con esos nombres).
-   Puedes exportar como glTF Embedded (`.gltf`) o GLB (`.glb`).
-5. Coloca el archivo en `assets` y actualiza `[model] path` y los nombres en `[animations]` de `config.toml`.
-   Ejecuta `run.bat --selftest` para revisar los clips y la carga del modelo.
+- Windows 10/11.
+- Python de 64 bits, recomendado Python 3.12; el arranque también intenta Python 3.11.
+- Cámara web con permiso para aplicaciones de escritorio.
+- Conexión a internet la primera vez para crear el entorno e instalar dependencias. Los modelos de pose y gestos vienen en `assets`.
 
-## Solución de problemas
-- **"No se pudo abrir la cámara"**: cierra Teams/Zoom/navegador; Configuración → Privacidad → Cámara (permitir apps de escritorio); prueba `index = 1`.
-- **La cámara tarda en cerrarse**: la app conserva el hilo hasta que libere la cámara y no inicia otra captura en paralelo. Espera unos segundos; si sigue atascada, cierra y vuelve a abrir la aplicación.
-- **Falla el selftest de la ventana 3D**: actualiza el driver de la tarjeta gráfica; ejecuta `.venv\Scripts\python -m pip install -U panda3d panda3d-gltf`.
-- **Error instalando mediapipe**: usa Python 3.11/3.12 de 64 bits; borra `.venv` y repite `run.bat`.
-- **No descarga el modelo de pose**: con internet, abre la URL de `POSE_URL` en `mascota/detector.py` y guarda el archivo en `assets/pose_landmarker_lite.task`.
-- **No saluda**: usa `C` y comprueba "persona: SÍ"; baja `min_shoulder_width` o mejora la luz; se ven nariz y hombros.
-- **Saluda a quien pasa lejos**: sube `min_shoulder_width` (p. ej. 0.15).
-- **Modelo de espaldas/de lado**: cambia `heading_degrees`. **Colores raros**: ajusta `ambient`/`directional`.
-- **Aviso "Faltan animaciones"**: los nombres no coinciden; cámbialos en `[animations]` según los clips listados.
-- **"Gestos desactivados":** falta `assets/gesture_recognizer.task` (ejecuta `run.bat --descargar-modelos`) o `[gestures] enabled = false`.
-- **El saludo no parece un saludo:** este modelo usa `jump` como clip provisional. Crea una acción de saludo en Blender y actualiza `[animations] saludo`.
-- **Saluda/camina sin querer:** sube `min_confidence` y `confirm_seconds`. **No reacciona:** baja `min_confidence`, acerca la mano, mejora la luz y usa `C` para ver la etiqueta detectada.
-- **Va lento con gestos:** sube `[detection] interval_ms` (p. ej. 250) o desactiva gestos.
-- **Respaldo en la feria**: botones o teclas `1`/`2` y `--manual`; la app nunca depende de la cámara para funcionar.
+Dependencias fijadas en `requirements.txt`:
 
-## Archivos
-`run.bat`, `requirements.txt`, `config.toml`, `assets/mascota.gltf`, los modelos locales de MediaPipe y `mascota/{app,detector,behavior,modelio,config,calibrate,selftest,__main__}.py`.
+- Panda3D `1.10.16` y `panda3d-gltf` `1.3.0` para la ventana 3D y los clips.
+- OpenCV `5.0.0.93` para la cámara y la vista de calibración.
+- MediaPipe `0.10.35` para presencia y gestos.
+
+## Instalar y ejecutar
+
+1. Clona o descomprime el repositorio.
+2. Ejecuta `run.bat`. La primera vez crea `.venv` e instala las dependencias.
+3. Permite el acceso a la cámara cuando Windows lo solicite.
+
+Comandos alternativos, desde la carpeta del proyecto:
+
+| Comando | Para qué sirve |
+| --- | --- |
+| `run.bat --manual` | Abre la app sin iniciar la cámara |
+| `run.bat --ventana` | Abre una ventana normal en vez de pantalla completa |
+| `run.bat --calibrar` | Muestra la cámara y los puntos detectados de persona y mano |
+| `run.bat --selftest` | Revisa lógica, modelo, cámara y carga de los reconocedores |
+| `run.bat --descargar-modelos` | Recupera los modelos de MediaPipe si falta alguno |
+
+El modo de calibración y el `selftest` acceden a la cámara; cierra antes otras aplicaciones que puedan estar usándola.
+
+## Controles
+
+| Tecla o botón | Acción |
+| --- | --- |
+| `1` / Reposo | Reproduce reposo |
+| `2` / Saludo | Prueba el saludo manualmente |
+| `3` / Caminar | Prueba el clip de caminar |
+| `M` / Auto-Manual | Activa o detiene la cámara |
+| `C` / Calibración | Muestra cámara, presencia, puntos de mano y confianza |
+| `F11` / Pantalla | Alterna pantalla completa y ventana |
+| `Esc` o `Q` | Cierra la aplicación |
+
+Si la cámara falla, la app cambia a modo manual y muestra el error. Los botones siguen disponibles.
+
+## Configuración
+
+Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
+
+| Ajuste | Sección y clave | Valor inicial |
+| --- | --- | --- |
+| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/mascota.gltf`, `0` |
+| Clips del personaje | `[animations] reposo`, `saludo`, `caminar` | `idle`, `jump`, `walk` mediante alias |
+| Cámara | `[camera] index`, `width`, `height` | `0`, `640`, `480` |
+| Detección de persona | `[detection] min_visibility`, `min_shoulder_width` | `0.5`, `0.10` |
+| Ritmo de análisis | `[detection] interval_ms` | `150` ms |
+| Tiempo hasta saludar | `[timing] detect_seconds` | `0.8` s |
+| Rearme tras ausencia | `[timing] lost_tolerance_seconds` | `0.5` s |
+| Vuelta a reposo | `[timing] reset_seconds` | `4.0` s |
+| Gestos | `[gestures] enabled`, `min_confidence` | `true`, `0.6` |
+| Confirmación, espera y rearme | `[gestures] confirm_seconds`, `cooldown_seconds`, `release_seconds` | `0.6`, `3.0`, `0.7` s |
+| Acción de cada gesto | `[gestures.actions]` | Palma = `saludo`; puño = `caminar` |
+
+Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
+
+## Estructura
+
+```text
+.
+├── assets/
+│   ├── gesture_recognizer.task
+│   ├── pose_landmarker_lite.task
+│   ├── mascota.gltf
+│   ├── mascota.glb
+│   └── LEEME.txt
+├── mascota/
+│   ├── app.py          # ventana, render 3D, controles y coordinación
+│   ├── behavior.py     # presencia, gestos y prioridad de acciones
+│   ├── detector.py     # cámara, pose y reconocedor de gestos
+│   ├── calibrate.py    # vista de diagnóstico
+│   ├── modelio.py      # inspección y carga glTF/GLB
+│   ├── config.py       # valores por defecto y rutas
+│   ├── selftest.py     # diagnóstico con y sin hardware
+│   └── __main__.py     # comandos de ejecución
+├── tests/
+│   └── test_logic.py   # pruebas de lógica sin cámara ni ventana
+├── config.toml
+├── requirements.txt
+├── run.bat
+├── AGENTS.md
+├── CLAUDE.md
+└── ROADMAP.md
+```
+
+## Desarrollo y pruebas
+
+Pruebas lógicas sin abrir cámara ni ventana:
+
+```powershell
+.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Diagnóstico integral (puede abrir la cámara y una ventana 3D oculta):
+
+```powershell
+run.bat --selftest
+```
+
+Consulta [ROADMAP.md](ROADMAP.md) para ver el estado, las limitaciones conocidas y los pasos antes de una publicación.
