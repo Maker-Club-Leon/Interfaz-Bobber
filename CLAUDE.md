@@ -30,7 +30,7 @@ Bobber es una mascota 3D local para un stand de feria. Detecta presencia y gesto
 - Si falla el detector de gestos, la detección de personas debe seguir disponible y la app debe explicar el fallo.
 - No añadas dependencias si la solución ya cabe en Panda3D/OpenCV/MediaPipe existentes.
 - Mantén soporte para las versiones fijadas en `requirements.txt` y Windows 10/11.
-- No incluyas `.venv`, cachés ni artefactos generados en commits. El índice actual aún tiene archivos del entorno virtual rastreados; consulta `ROADMAP.md` antes de hacer limpieza de Git.
+- No incluyas `.venv`, cachés ni artefactos generados en commits. El índice ya no rastrea `.venv` ni `__pycache__` y `.gitignore` los excluye; `.venv` es solo local. No reescribas el historial ni cambies el remoto por iniciativa propia.
 
 ## Verificación
 

@@ -32,7 +32,7 @@ El modelo activo es `assets/mascota.gltf`; sus clips son `idle`, `jump` y `walk`
 - Requisitos probados/documentados: Windows, Python 3.11/3.12 de 64 bits; `requirements.txt` fija Panda3D, panda3d-gltf, OpenCV y MediaPipe.
 - No cambies versiones, APIs de MediaPipe o formato de exportación sin comprobar la compatibilidad con Windows y actualizar README e instrucciones.
 - Los modelos de MediaPipe están en `assets`. La descarga explícita se hace con `run.bat --descargar-modelos`; el análisis normal no debe necesitar internet si existen los modelos.
-- No añadas `.venv`, `__pycache__`, `.pyc`, secretos o artefactos de compilación al control de versiones. El `.gitignore` existe, pero revisa el índice: parte de `.venv` y `mascota/__pycache__` ya aparece rastreada.
+- No añadas `.venv`, `__pycache__`, `.pyc`, secretos o artefactos de compilación al control de versiones. `.gitignore` los excluye y el índice ya no rastrea `.venv` ni `__pycache__`; `.venv` debe quedarse solo en local. Antes de hacer commit, revisa `git status` para que no vuelvan a colarse.
 
 ## Pruebas y comprobaciones
 
