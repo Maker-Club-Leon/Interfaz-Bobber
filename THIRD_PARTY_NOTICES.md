@@ -8,7 +8,13 @@ El código propio de Bobber se publica bajo la [licencia MIT](LICENSE). Este arc
 | --- | --- | --- | --- |
 | `pose_landmarker_lite.task` | Google MediaPipe, modelo BlazePose GHUM 3D (lite) | Apache License 2.0, según su [ficha del modelo](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf) | Comprobado |
 | `gesture_recognizer.task` | Google MediaPipe, Gesture Recognizer (detector de manos + clasificador de gestos) | La [ficha del clasificador](https://storage.googleapis.com/mediapipe-assets/gesture_recognizer/model_card_hand_gesture_classification_with_faireness_2022.pdf) no indica licencia | **Por confirmar** antes de redistribuirlo |
-| `mascota.gltf`, `mascota.glb` | Modelo de Bobber exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Por confirmar** por el club: autoría y derecho de redistribución |
+| `mascota.gltf`, `mascota.glb` | Modelo **de pruebas**, provisional hasta tener el Bobber definitivo con sus animaciones. Exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Origen por confirmar**: no consta si lo hizo el club o un tercero |
+
+### Modelo de Bobber
+
+El personaje Bobber y sus modelos 3D son de Maker Club León: © 2026 Maker Club León, todos los derechos reservados. La licencia MIT del código no los cubre. Se incluyen en el repositorio para que la aplicación funcione, pero no se concede permiso para reutilizarlos fuera de este proyecto sin autorización del club.
+
+Mientras no se confirme el origen del modelo de pruebas actual, esta sección se aplica solo al Bobber definitivo.
 
 Los modelos de MediaPipe proceden de `storage.googleapis.com/mediapipe-models/` (ver `mascota/detector.py`). Si no se redistribuyen, `run.bat --descargar-modelos` los descarga de esa misma fuente.
 
