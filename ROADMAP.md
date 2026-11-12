@@ -23,7 +23,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - La aplicación está ajustada para una cámara y una mano. Los tiempos de análisis y umbrales deben calibrarse en el stand real, con su iluminación y distancia.
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
-- El código tiene licencia MIT y `THIRD_PARTY_NOTICES.md` recoge las licencias de terceros, pero faltan por confirmar la licencia de `gesture_recognizer.task` y el origen del modelo de pruebas actual.
+- El código tiene licencia MIT y `THIRD_PARTY_NOTICES.md` recoge las licencias de terceros, pero falta confirmar el origen del modelo de pruebas actual. La licencia del clasificador de gestos de MediaPipe se deduce por indicios, sin declaración expresa de Google.
 - `mascota.gltf` es un modelo de pruebas; el Bobber definitivo, con sus animaciones, está pendiente.
 - La orientación (`heading_degrees = 180`) se comprobó con un render fuera de pantalla del modelo; falta verla en el monitor del stand.
 
@@ -34,7 +34,8 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [x] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
 - [ ] Decidir si se publican ambos modelos. `mascota.gltf` es el activo; `mascota.glb` es una alternativa sin animaciones.
 - [x] Documentar licencias y atribuciones de dependencias y modelos en `THIRD_PARTY_NOTICES.md` (`pose_landmarker_lite.task`: Apache 2.0).
-- [ ] Confirmar la licencia de `gesture_recognizer.task`: su ficha no la indica. Si no se puede confirmar, dejar de publicarlo y apoyarse en `run.bat --descargar-modelos`.
+- [x] Revisar la licencia de `gesture_recognizer.task`: el detector de manos es Apache 2.0 según su ficha; el clasificador, por indicios del repositorio oficial de MediaPipe (ver `THIRD_PARTY_NOTICES.md`).
+- [ ] Antes de una publicación abierta o comercial, pedir confirmación a Google sobre el clasificador de gestos o dejar de incluir el `.task` en el repositorio.
 - [x] Fijar los derechos del Bobber definitivo: es del club, © Maker Club León, todos los derechos reservados (fuera de la MIT).
 - [ ] Confirmar el origen del modelo de pruebas actual (`mascota.gltf`/`mascota.glb`). Si no es del club y no tiene licencia que lo permita, retirarlo del repositorio público.
 - [x] Elegir una licencia para el código y añadir el archivo correspondiente (MIT, `LICENSE`; no cubre `assets/`).

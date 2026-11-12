@@ -7,7 +7,7 @@ El código propio de Bobber se publica bajo la [licencia MIT](LICENSE). Este arc
 | Archivo | Origen | Licencia | Estado |
 | --- | --- | --- | --- |
 | `pose_landmarker_lite.task` | Google MediaPipe, modelo BlazePose GHUM 3D (lite) | Apache License 2.0, según su [ficha del modelo](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf) | Comprobado |
-| `gesture_recognizer.task` | Google MediaPipe, Gesture Recognizer (detector de manos + clasificador de gestos) | La [ficha del clasificador](https://storage.googleapis.com/mediapipe-assets/gesture_recognizer/model_card_hand_gesture_classification_with_faireness_2022.pdf) no indica licencia | **Por confirmar** antes de redistribuirlo |
+| `gesture_recognizer.task` | Google MediaPipe, Gesture Recognizer. Contiene `hand_landmarker.task` (detector y seguimiento de manos) y `hand_gesture_recognizer.task` (clasificador de gestos) | Apache License 2.0 (ver nota) | Comprobado el detector de manos; el clasificador, por indicios |
 | `mascota.gltf`, `mascota.glb` | Modelo **de pruebas**, provisional hasta tener el Bobber definitivo con sus animaciones. Exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Origen por confirmar**: no consta si lo hizo el club o un tercero |
 
 ### Modelo de Bobber
@@ -18,7 +18,13 @@ Mientras no se confirme el origen del modelo de pruebas actual, esta sección se
 
 Los modelos de MediaPipe proceden de `storage.googleapis.com/mediapipe-models/` (ver `mascota/detector.py`). Si no se redistribuyen, `run.bat --descargar-modelos` los descarga de esa misma fuente.
 
-Ambas fichas de MediaPipe declaran fuera de alcance la vigilancia y el reconocimiento de identidad. Bobber respeta ese límite: solo estima presencia y gestos, y no identifica personas.
+Nota sobre `gesture_recognizer.task`:
+
+- **Detector y seguimiento de manos:** la [ficha de MediaPipe Hands](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Hand%20Tracking%20(Lite_Full)%20with%20Fairness%20Oct%202021.pdf) indica expresamente «Apache License, Version 2.0».
+- **Clasificador de gestos:** su [ficha](https://storage.googleapis.com/mediapipe-assets/gesture_recognizer/model_card_hand_gesture_classification_with_faireness_2022.pdf) no menciona licencia. Aun así, el repositorio oficial [google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) (Apache-2.0) declara sus pesos (`canned_gesture_classifier.tflite`, `gesture_embedder.tflite`) en `mediapipe/model_maker/models/gesture_recognizer/BUILD`, con cabecera Apache 2.0 y `licenses(["notice"])`.
+- **Conclusión:** es coherente con Apache 2.0, pero Google no lo declara de forma expresa para este archivo. Para una distribución comercial o pública conviene pedir confirmación a Google o no incluir el archivo en el repositorio y descargarlo con `run.bat --descargar-modelos`.
+
+Las fichas de MediaPipe declaran fuera de alcance la vigilancia y el reconocimiento de identidad. Bobber respeta ese límite: solo estima presencia y gestos, y no identifica personas.
 
 Atribución de BlazePose, tal como pide su ficha:
 

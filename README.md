@@ -206,4 +206,4 @@ Consulta [ROADMAP.md](ROADMAP.md) para ver el estado, las limitaciones conocidas
 
 El código de este repositorio se publica bajo la [licencia MIT](LICENSE), © 2026 Maker Club León.
 
-La licencia MIT no cubre los archivos de `assets/` ni las dependencias. El personaje Bobber y sus modelos 3D son © Maker Club León, con todos los derechos reservados. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) recoge la licencia de cada componente de terceros y las atribuciones. Todavía faltan por confirmar la licencia de `gesture_recognizer.task` y el origen del modelo de pruebas actual.
+La licencia MIT no cubre los archivos de `assets/` ni las dependencias. El personaje Bobber y sus modelos 3D son © Maker Club León, con todos los derechos reservados. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) recoge la licencia de cada componente de terceros y las atribuciones. Falta confirmar el origen del modelo de pruebas actual.
