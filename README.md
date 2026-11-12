@@ -118,6 +118,43 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 
 Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
 
+## Procedimiento en el stand
+
+Este procedimiento se basa en cómo reacciona el código ante cada fallo. Aún hay que validarlo en el ordenador y con la cámara del stand.
+
+### Antes de abrir al público
+
+1. Conecta la webcam y cierra otras aplicaciones que puedan usarla (Teams, Zoom, Cámara de Windows…).
+2. Ejecuta `run.bat --calibrar`. Comprueba que se detecta a una persona a la distancia deseada y que la palma y el puño se reconocen. Cierra la ventana al terminar: la app y la calibración no deben usar la cámara a la vez.
+3. Ejecuta `run.bat`. Arranca a pantalla completa en modo automático y arriba a la izquierda debe aparecer `Modo auto · cámara activa`.
+4. Comprueba que Bobber mira al público. Si no, ajusta `heading_degrees` en `config.toml` y reinicia.
+5. Pulsa `2` y `3` para probar el saludo y caminar, y `1` para volver a reposo. Después acércate y prueba palma y puño.
+6. Si aparece un texto de aviso en pantalla, consulta la tabla siguiente antes de abrir.
+
+### Solución de problemas
+
+La app no se cierra por un fallo de cámara o de gestos: pasa a modo manual o desactiva solo lo que falla, y muestra el motivo en pantalla. Los botones y las teclas `1`, `2` y `3` siempre siguen disponibles.
+
+| Qué ves | Qué ha pasado | Qué hacer |
+| --- | --- | --- |
+| `Cámara no disponible: no se pudo abrir la cámara…` | Cámara ocupada, desconectada o sin permiso | Cierra otras apps que usen la cámara, revisa *Configuración > Privacidad > Cámara* («Permitir que las aplicaciones de escritorio accedan a la cámara») y pulsa `M` para reintentar. Si hay varias cámaras, prueba `[camera] index = 1` |
+| `La cámara no responde…` | El driver no entregó imagen en `starting_timeout_seconds` | Desconecta y vuelve a conectar la webcam, espera unos segundos y pulsa `M` |
+| `Cámara no disponible: se perdió la señal de la cámara` | La cámara se desconectó con la app abierta | Reconéctala y pulsa `M` |
+| `La cámara aún se está cerrando…` | Se pulsó `M` antes de que se liberara la cámara | Espera unos segundos y vuelve a pulsar `M` |
+| `Gestos desactivados: …` | Falta `gesture_recognizer.task` o falló el reconocedor | La presencia y el modo manual siguen activos. Cierra la app, ejecuta `run.bat --descargar-modelos` (requiere internet) y vuelve a abrirla |
+| `Cámara no disponible:` con un error de red o de MediaPipe | Falta `pose_landmarker_lite.task` y no se pudo descargar, o el modelo de pose no carga | Comprueba que el archivo está en `assets`; si falta, ejecuta `run.bat --descargar-modelos` con internet y reinicia |
+| `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/mascota.gltf` | Restaura el archivo desde el repositorio y revisa `[model] path` |
+| `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`idle`, `jump`, `walk`) |
+| `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.11/3.12 de 64 bits o no hay internet | Instala Python desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
+
+### Plan manual
+
+Si la cámara no se recupera, sigue con el stand en modo manual:
+
+- Arranca con `run.bat --manual` para no intentar abrir la cámara, o pulsa `M` si la app ya está abierta.
+- Usa `2` (saludo) cuando llegue alguien y `3` (caminar) para llamar la atención; `1` vuelve a reposo.
+- `F11` alterna entre ventana y pantalla completa; `Esc` o `Q` cierran la app.
+
 ## Estructura
 
 ```text

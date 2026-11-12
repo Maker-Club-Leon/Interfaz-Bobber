@@ -43,7 +43,8 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [ ] Calibrar iluminación, encuadre, `min_shoulder_width`, `min_visibility` y `interval_ms` en el stand.
 - [ ] Probar palma y puño varias veces, y comprobar cooldown, retirada de mano y ausencia de solapamiento.
 - [ ] Medir FPS/temperatura durante una sesión prolongada y ajustar intervalos o resolución si hace falta.
-- [ ] Definir un procedimiento de arranque y un plan manual si la cámara o el modelo fallan.
+- [x] Definir un procedimiento de arranque y un plan manual si la cámara o el modelo fallan (README, «Procedimiento en el stand»).
+- [ ] Validar ese procedimiento en el stand y completar la tabla de solución de problemas con lo que ocurra en pruebas reales.
 
 ## Prioridad 2 — mejorar la interacción
 
