@@ -181,6 +181,7 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 ├── run.bat
 ├── AGENTS.md
 ├── CLAUDE.md
+├── LICENSE
 └── ROADMAP.md
 ```
 
@@ -199,3 +200,9 @@ run.bat --selftest
 ```
 
 Consulta [ROADMAP.md](ROADMAP.md) para ver el estado, las limitaciones conocidas y los pasos antes de una publicación.
+
+## Licencia
+
+El código de este repositorio se publica bajo la [licencia MIT](LICENSE), © 2026 Maker Club León.
+
+La licencia MIT no cubre los archivos de `assets/`. Los modelos de MediaPipe (`gesture_recognizer.task`, `pose_landmarker_lite.task`) son de Google y tienen sus propias condiciones. Los derechos y atribuciones del modelo de Bobber (`mascota.gltf`, `mascota.glb`) están pendientes de revisión (ver [ROADMAP.md](ROADMAP.md)). Las dependencias de `requirements.txt` mantienen sus licencias.

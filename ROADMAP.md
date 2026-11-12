@@ -23,7 +23,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - La aplicación está ajustada para una cámara y una mano. Los tiempos de análisis y umbrales deben calibrarse en el stand real, con su iluminación y distancia.
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
-- No hay todavía una licencia del proyecto ni una nota formal de licencias/atribuciones de los modelos y dependencias.
+- El código tiene licencia MIT, pero falta una nota formal de licencias/atribuciones de los modelos y dependencias.
 - La orientación (`heading_degrees = 180`) se comprobó con un render fuera de pantalla del modelo; falta verla en el monitor del stand.
 
 ## Prioridad 0 — dejar el repositorio listo para GitHub
@@ -33,7 +33,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [x] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
 - [ ] Decidir si se publican ambos modelos. `mascota.gltf` es el activo; `mascota.glb` es una alternativa sin animaciones.
 - [ ] Confirmar derecho de redistribución y atribuciones de `gesture_recognizer.task`, `pose_landmarker_lite.task` y los assets de Bobber. Si no se publican los `.task`, documentar claramente cómo descargarlos.
-- [ ] Elegir una licencia para el código y añadir el archivo correspondiente antes de presentar el repositorio como reutilizable.
+- [x] Elegir una licencia para el código y añadir el archivo correspondiente (MIT, `LICENSE`; no cubre `assets/`).
 
 ## Prioridad 1 — validar en las condiciones de la feria
 
