@@ -43,7 +43,8 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 ## Prioridad 1 — validar en las condiciones de la feria
 
 - [ ] Instalar desde cero en un PC Windows limpio usando solo el README y `run.bat`.
-- [ ] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest`.
+- [x] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest` en el PC de desarrollo con su webcam (2026-11-13: 26 pruebas y selftest «TODO CORRECTO»; un fotograma 640x480, persona detectada).
+- [ ] Repetir el `selftest` en el PC y con la cámara del stand.
 - [ ] Probar la webcam real: permisos, cambio a manual, cierre/reintento, distancia de detección y recuperación tras ausencias.
 - [ ] Calibrar iluminación, encuadre, `min_shoulder_width`, `min_visibility` y `interval_ms` en el stand.
 - [ ] Probar palma y puño varias veces, y comprobar cooldown, retirada de mano y ausencia de solapamiento.
