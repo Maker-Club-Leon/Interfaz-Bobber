@@ -182,6 +182,7 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── LICENSE
+├── THIRD_PARTY_NOTICES.md
 └── ROADMAP.md
 ```
 
@@ -205,4 +206,4 @@ Consulta [ROADMAP.md](ROADMAP.md) para ver el estado, las limitaciones conocidas
 
 El código de este repositorio se publica bajo la [licencia MIT](LICENSE), © 2026 Maker Club León.
 
-La licencia MIT no cubre los archivos de `assets/`. Los modelos de MediaPipe (`gesture_recognizer.task`, `pose_landmarker_lite.task`) son de Google y tienen sus propias condiciones. Los derechos y atribuciones del modelo de Bobber (`mascota.gltf`, `mascota.glb`) están pendientes de revisión (ver [ROADMAP.md](ROADMAP.md)). Las dependencias de `requirements.txt` mantienen sus licencias.
+La licencia MIT no cubre los archivos de `assets/` ni las dependencias. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) recoge la licencia de cada componente de terceros y las atribuciones. Todavía faltan por confirmar la licencia de `gesture_recognizer.task` y los derechos del modelo de Bobber.
