@@ -14,7 +14,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - Prioridad de acciones para que presencia y gestos no se solapen con controles manuales.
 - Modo manual de respaldo, tiempo máximo de inicio de cámara, limpieza de recursos y vista de calibración.
 - Modelos de pose y gestos incluidos en `assets`; comando para recuperarlos si faltan.
-- Configuración en `config.toml`, instalación con `run.bat`, `selftest.py` y pruebas unitarias de lógica/modelo.
+- Configuración en `config.toml`, instalación con `run.bat`, `selftest.py` y pruebas unitarias de presencia, gestos, prioridad de acciones y modelo.
 - `.gitignore` con patrones para entorno Python, cachés, builds, archivos de sistema y secretos locales.
 
 ### Limitaciones conocidas
@@ -24,13 +24,13 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
 - No hay todavía una licencia del proyecto ni una nota formal de licencias/atribuciones de los modelos y dependencias.
-- Aunque existe `.gitignore`, el índice de Git conserva aproximadamente 6.986 archivos de `.venv` y siete archivos de `mascota/__pycache__`. Ignorarlos no los quita del índice.
+- La orientación (`heading_degrees = 180`) se comprobó con un render fuera de pantalla del modelo; falta verla en el monitor del stand.
 
 ## Prioridad 0 — dejar el repositorio listo para GitHub
 
-- [ ] Revisar `git status` y confirmar el estado de la rama/remoto antes de alterar el índice.
-- [ ] Quitar del índice `.venv` y bytecode sin borrar las copias locales: `git rm -r --cached .venv mascota/__pycache__`.
-- [ ] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
+- [x] Revisar `git status` y confirmar el estado de la rama/remoto antes de alterar el índice.
+- [x] Quitar del índice `.venv` y bytecode sin borrar las copias locales (el historial actual ya no los contiene).
+- [x] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
 - [ ] Decidir si se publican ambos modelos. `mascota.gltf` es el activo; `mascota.glb` es una alternativa sin animaciones.
 - [ ] Confirmar derecho de redistribución y atribuciones de `gesture_recognizer.task`, `pose_landmarker_lite.task` y los assets de Bobber. Si no se publican los `.task`, documentar claramente cómo descargarlos.
 - [ ] Elegir una licencia para el código y añadir el archivo correspondiente antes de presentar el repositorio como reutilizable.
@@ -49,8 +49,9 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 
 - [ ] Crear y exportar clips reales `saludo` y `reposo` en Blender; mantener `walk` para el gesto de puño.
 - [ ] Actualizar `[animations]` y la documentación cuando los clips nuevos estén dentro del modelo.
-- [ ] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
-- [ ] Revisar el encuadre/orientación en el monitor del stand y fijar `heading_degrees`.
+- [x] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
+- [x] Fijar `heading_degrees` para que la mascota mire al público (`180` con `mascota.gltf`).
+- [ ] Revisar el encuadre/orientación en el monitor del stand.
 - [ ] Preparar una captura o vídeo corto para el README y una guía de solución de problemas basada en pruebas reales.
 
 ## Criterios para considerar lista una versión de feria

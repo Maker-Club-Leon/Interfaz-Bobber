@@ -1,7 +1,7 @@
 # ===== CONFIGURACIÓN (reinicia la app tras cambiarla) =====
 [model]
 path = "assets/mascota.gltf" # Modelo del proyecto web: textura embebida y clips idle/jump/walk
-heading_degrees = 0        # giro para que mire a la pantalla (prueba 90, 180 o -90)
+heading_degrees = 180      # 180 = mira al público con mascota.gltf (0 = de espaldas; 90/-90 = de perfil)
 
 [animations]               # nombres de los clips tal y como están en Blender
 reposo = ["reposo", "idle"]

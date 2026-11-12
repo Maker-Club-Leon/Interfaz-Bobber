@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULTS = {
-    "model": {"path": "assets/mascota.gltf", "heading_degrees": 0},
+    "model": {"path": "assets/mascota.gltf", "heading_degrees": 180},
     "animations": {"reposo": ["reposo", "idle"],
                     "saludo": ["saludo", "jump", "waving"],
                     "caminar": ["walk", "walking"]},

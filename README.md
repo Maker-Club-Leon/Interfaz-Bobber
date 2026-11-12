@@ -102,7 +102,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 
 | Ajuste | Sección y clave | Valor inicial |
 | --- | --- | --- |
-| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/mascota.gltf`, `0` |
+| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/mascota.gltf`, `180` (de frente) |
 | Clips del personaje | `[animations] reposo`, `saludo`, `caminar` | `idle`, `jump`, `walk` mediante alias |
 | Cámara | `[camera] index`, `width`, `height` | `0`, `640`, `480` |
 | Detección de persona | `[detection] min_visibility`, `min_shoulder_width` | `0.5`, `0.10` |
@@ -113,6 +113,8 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Gestos | `[gestures] enabled`, `min_confidence` | `true`, `0.6` |
 | Confirmación, espera y rearme | `[gestures] confirm_seconds`, `cooldown_seconds`, `release_seconds` | `0.6`, `3.0`, `0.7` s |
 | Acción de cada gesto | `[gestures.actions]` | Palma = `saludo`; puño = `caminar` |
+
+`heading_degrees` gira el modelo sobre su eje vertical. Con `mascota.gltf`, `180` lo deja mirando al público; `0` lo muestra de espaldas y `90`/`-90` de perfil. Si cambias de modelo, prueba esos valores.
 
 Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
 
