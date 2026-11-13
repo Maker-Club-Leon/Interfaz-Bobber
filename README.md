@@ -13,6 +13,10 @@ El procesamiento de cámara se hace en el propio ordenador. La aplicación no id
 >
 > Después comprueba con `run.bat --selftest` que la línea «Versión de MediaPipe fijada (sin telemetría)» sale como `[OK] 0.10.33`. Más detalles en [Requisitos](#requisitos).
 
+![Bobber en modo stand: la mascota en reposo, el mensaje «Acércate para saludar» y la ayuda de gestos](docs/captura-stand.png)
+
+*Modo stand a pantalla completa, esperando visitantes. El personaje es el modelo de pruebas provisional.*
+
 ## Qué hace
 
 - Muestra la mascota 3D usando Panda3D y carga modelos glTF/GLB.
@@ -193,6 +197,8 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 │   ├── mascota.gltf
 │   ├── mascota.glb
 │   └── LEEME.txt
+├── docs/
+│   └── captura-stand.png  # captura del README
 ├── mascota/
 │   ├── app.py          # ventana, render 3D, controles y coordinación
 │   ├── behavior.py     # presencia, gestos y prioridad de acciones

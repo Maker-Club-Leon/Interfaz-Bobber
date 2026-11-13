@@ -68,7 +68,9 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [x] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
 - [x] Fijar `heading_degrees` para que la mascota mire al público (`180` con `mascota.gltf`).
 - [ ] Revisar el encuadre/orientación en el monitor del stand.
-- [ ] Preparar una captura o vídeo corto para el README y una guía de solución de problemas basada en pruebas reales.
+- [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
+- [ ] Sustituir la captura cuando esté el Bobber definitivo; opcional: vídeo corto del saludo y del paseo.
+- [ ] Completar la guía de solución de problemas con lo que ocurra en pruebas reales en el stand.
 
 ## Criterios para considerar lista una versión de feria
 
