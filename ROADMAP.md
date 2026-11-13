@@ -13,6 +13,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - Confirmación, cooldown y liberación de gesto para reducir activaciones accidentales.
 - Prioridad de acciones para que presencia y gestos no se solapen con controles manuales.
 - Modo manual de respaldo, tiempo máximo de inicio de cámara, limpieza de recursos y vista de calibración.
+- Corregido el cierre de la app al caminar (tecla 3, botón o puño): faltaba el mensaje `walk`. Hay una prueba que comprueba que todos los mensajes usados tienen valor por defecto.
 - Modelos de pose y gestos incluidos en `assets`; comando para recuperarlos si faltan.
 - Configuración en `config.toml`, instalación con `run.bat`, `selftest.py` y pruebas unitarias de presencia, gestos, prioridad de acciones y modelo.
 - `.gitignore` con patrones para entorno Python, cachés, builds, archivos de sistema y secretos locales.

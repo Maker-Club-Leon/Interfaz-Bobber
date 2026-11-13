@@ -58,3 +58,4 @@ idle = "Acércate para saludar"
 hello = "¡Hola!"
 after = "¡Disfruta de la feria!"
 manual = "Modo manual"
+walk = "¡Vamos a dar un paseo!"    # mientras camina (puño cerrado o tecla 3)

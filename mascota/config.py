@@ -24,7 +24,8 @@ DEFAULTS = {
     "window": {"fullscreen": True, "font": ""},
     "render": {"ambient": 0.9, "directional": 0.4},
     "messages": {"idle": "Acércate para saludar", "hello": "¡Hola!",
-                 "after": "¡Disfruta de la feria!", "manual": "Modo manual"},
+                 "after": "¡Disfruta de la feria!", "manual": "Modo manual",
+                 "walk": "¡Vamos a dar un paseo!"},
 }
 
 

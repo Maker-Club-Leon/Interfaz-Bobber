@@ -193,6 +193,24 @@ class ActionArbiterTests(unittest.TestCase):
         self.assertTrue(self.arb.request("saludo", "presence", 1.0, 2.0))
 
 
+class ConfigTests(unittest.TestCase):
+    def test_mensajes_usados_por_la_app_tienen_valor_por_defecto(self):
+        """Un mensaje sin valor por defecto lanza KeyError y cierra la app (pasó con 'walk')."""
+        import re
+        from mascota.config import DEFAULTS
+        source = (ROOT / "mascota" / "app.py").read_text(encoding="utf-8")
+        used = set(re.findall(r"msgs\[\"(\w+)\"\]", source))
+        self.assertIn("walk", used)
+        self.assertEqual(used - set(DEFAULTS["messages"]), set())
+
+    def test_config_toml_define_los_mismos_mensajes(self):
+        import tomllib
+        from mascota.config import DEFAULTS
+        with open(ROOT / "config.toml", "rb") as f:
+            toml_msgs = tomllib.load(f)["messages"]
+        self.assertEqual(set(toml_msgs), set(DEFAULTS["messages"]))
+
+
 class ClipAndModelTests(unittest.TestCase):
     def test_resuelve_clips_sin_distinguir_mayusculas(self):
         resolved = resolve_clips(
