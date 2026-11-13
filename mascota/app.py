@@ -1,6 +1,7 @@
 """Aplicación Panda3D: muestra el GLB, reproduce reposo/saludo y reacciona a la cámara."""
 import os
 import time
+import traceback
 
 from direct.actor.Actor import Actor  # noqa: F401  (asegura que el módulo esté disponible)
 from direct.gui.DirectGui import DirectButton, OnscreenText
@@ -36,6 +37,7 @@ class MascotaApp(ShowBase):
         self._gesture_err_shown = False
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
         self._detector_started_at = 0.0
+        self._last_error, self._last_error_at = "", 0.0
         self.kiosk = cfg["window"]["fullscreen"] and not windowed
         self.exitFunc = self._cleanup
 
@@ -47,12 +49,47 @@ class MascotaApp(ShowBase):
 
         for key, fn in [("escape", self.userExit), ("q", self.userExit), ("f11", self.toggle_window),
                         ("1", self.idle), ("2", self.greet), ("3", self.walk), ("m", self.toggle_mode), ("c", self.toggle_debug)]:
-            self.accept(key, fn)
-        self.taskMgr.add(self._tick, "tick")
+            self.accept(key, self._safe(fn))
+        self.taskMgr.add(self._safe_tick, "tick")
         if cfg["detection"]["auto_start"] and not start_manual:
             self.start_auto()
         else:
             self._say(self.msgs["manual"])
+
+    # ---------- errores ----------
+    def _safe(self, fn, where=None):
+        """Envuelve una tecla, botón o temporizador: un fallo se avisa en pantalla y no cierra la app."""
+        where = where or getattr(fn, "__name__", "acción")
+        def wrapper(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                self._handle_error(where, e)
+        return wrapper
+
+    def _safe_tick(self, task):
+        try:
+            return self._tick(task)
+        except Exception as e:
+            self._handle_error("bucle principal", e)
+            return task.cont
+
+    def _handle_error(self, where, e):
+        """Registra el error en consola, avisa en pantalla y devuelve a la mascota a reposo."""
+        now, text = time.monotonic(), f"{type(e).__name__}: {e}"
+        if text == self._last_error and now - self._last_error_at < 5.0:
+            return                                # el mismo fallo repetido: se vuelve a avisar cada 5 s
+        self._last_error, self._last_error_at = text, now
+        print(f"[ERROR] en {where}:\n{traceback.format_exc()}", flush=True)
+        try:
+            self.idle(announce=False)
+        except Exception:
+            pass                                  # si ni el reposo funciona, al menos la ventana sigue viva
+        try:
+            self._flash(f"Error interno en {where}: {text}. Bobber vuelve a reposo; "
+                        "los controles siguen disponibles.")
+        except Exception:
+            pass
 
     # ---------- escena y modelo ----------
     def _build_scene(self):
@@ -161,7 +198,7 @@ class MascotaApp(ShowBase):
         self._say(self.msgs["hello"])
         if has_clip:
             self.model.play(self.clip["saludo"])
-            self.taskMgr.doMethodLater(dur, lambda t: self._after_greet(), "after-greet")
+            self.taskMgr.doMethodLater(dur, self._safe(lambda t: self._after_greet(), "fin del saludo"), "after-greet")
         else:
             self.fb_greet.start()
         return True
@@ -182,7 +219,7 @@ class MascotaApp(ShowBase):
         self._stop_all()
         self._say(self.msgs["walk"])
         self.model.loop(self.clip["caminar"])
-        self.taskMgr.doMethodLater(dur, lambda t: self._after_walk(), "after-greet")
+        self.taskMgr.doMethodLater(dur, self._safe(lambda t: self._after_walk(), "fin del paseo"), "after-greet")
         return True
 
     def _after_walk(self):
@@ -301,10 +338,12 @@ class MascotaApp(ShowBase):
         widths = [len(t) * 0.5 + 1.6 for t, _ in buttons]
         gap, sc = 0.7, 0.05
         x = -(sum(widths) + gap * (len(widths) - 1)) * sc / 2
+        self.buttons = []
         for (label, cmd), w in zip(buttons, widths):
-            DirectButton(parent=self.a2dBottomCenter, text=label, text_font=self.font, command=cmd, scale=sc,
+            btn = DirectButton(parent=self.a2dBottomCenter, text=label, text_font=self.font, command=self._safe(cmd), scale=sc,
                          pos=(x + w * sc / 2, 0, 0.1), frameSize=(-w / 2, w / 2, -0.5, 1.1), text_pos=(0, 0),
                          frameColor=(1, 1, 1, 0.18), text_fg=(1, 1, 1, 1), relief=1, pressEffect=1)
+            self.buttons.append(btn)
             x += (w + gap) * sc
 
     def _refresh_ui(self):

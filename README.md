@@ -152,7 +152,7 @@ Este procedimiento se basa en cómo reacciona el código ante cada fallo. Aún h
 
 ### Solución de problemas
 
-La app no se cierra por un fallo de cámara o de gestos: pasa a modo manual o desactiva solo lo que falla, y muestra el motivo en pantalla. Los botones y las teclas `1`, `2` y `3` siempre siguen disponibles.
+La app no se cierra por un fallo de cámara, de gestos ni por un error interno en una acción: pasa a modo manual o desactiva solo lo que falla, y muestra el motivo en pantalla. Los botones y las teclas `1`, `2` y `3` siempre siguen disponibles.
 
 | Qué ves | Qué ha pasado | Qué hacer |
 | --- | --- | --- |
@@ -164,6 +164,7 @@ La app no se cierra por un fallo de cámara o de gestos: pasa a modo manual o de
 | `Cámara no disponible:` con un error de red o de MediaPipe | Falta `pose_landmarker_lite.task` y no se pudo descargar, o el modelo de pose no carga | Comprueba que el archivo está en `assets`; si falta, ejecuta `run.bat --descargar-modelos` con internet y reinicia |
 | `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/mascota.gltf` | Restaura el archivo desde el repositorio y revisa `[model] path` |
 | `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`idle`, `jump`, `walk`) |
+| `Error interno en …: …. Bobber vuelve a reposo…` | Un fallo de código en una tecla, un botón, un gesto o el bucle principal. La app no se cierra | Sigue con el stand; si se repite, anota el mensaje y copia el `[ERROR]` completo que aparece en la consola de `run.bat` para depurarlo |
 | `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.11/3.12 de 64 bits o no hay internet | Instala Python desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
 
 ### Plan manual
