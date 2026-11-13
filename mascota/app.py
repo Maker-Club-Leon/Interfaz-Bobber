@@ -324,8 +324,18 @@ class MascotaApp(ShowBase):
     def _build_ui(self):
         self.msg = self._text(self.a2dTopCenter, pos=(0, -0.2), scale=0.13, fg=(1, 1, 1, 1))
         self.status = self._text(self.a2dTopLeft, pos=(0.03, -0.06), scale=0.04, fg=(1, 1, 1, 0.7), align=TextNode.ALeft)
-        self.err_text = self._text(self.a2dBottomCenter, pos=(0, 0.28), scale=0.045, fg=(1, 0.7, 0.6, 1), wordwrap=40)
+        self.err_text = self._text(self.a2dBottomCenter, pos=(0, 0.37), scale=0.045, fg=(1, 0.7, 0.6, 1), wordwrap=40)
         self.err_text.setText(self.warning)
+        # Ayuda para el visitante: qué gestos hay y, mientras se confirma uno, una barra de progreso
+        self.hint_text = self._text(self.a2dBottomCenter, pos=(0, 0.235), scale=0.06, fg=(1, 1, 1, 0.9))
+        cm = CardMaker("hold-bg"); cm.setFrame(-0.3, 0.3, -0.008, 0.008)
+        self.hold_bar = self.a2dBottomCenter.attachNewNode("hold-bar")
+        self.hold_bar.setPos(0, 0, 0.205)
+        bg = self.hold_bar.attachNewNode(cm.generate()); bg.setColor(1, 1, 1, 0.25)
+        cm = CardMaker("hold-fill"); cm.setFrame(0, 0.6, -0.008, 0.008)
+        self.hold_fill = self.hold_bar.attachNewNode(cm.generate())
+        self.hold_fill.setPos(-0.3, 0, 0); self.hold_fill.setColor(1, 0.85, 0.3, 1)
+        self.hold_bar.setTransparency(True); self.hold_bar.hide()
         self.debug_text = self._text(self.a2dTopRight, pos=(-0.05, -0.75), scale=0.04, align=TextNode.ARight, fg=(1, 1, 1, 1))
         cm = CardMaker("preview"); cm.setFrame(-0.4, 0.4, -0.3, 0.3)
         self.preview_card = self.a2dTopRight.attachNewNode(cm.generate())
@@ -354,6 +364,7 @@ class MascotaApp(ShowBase):
         )
         hand = self._hand_text(d)
         self.status.setText(f"Modo {self.mode} · {cam}" + (f" · {hand}" if hand else ""))
+        self._refresh_hint(d)
         if self.debug and d:
             self.debug_text.setText(
                 f"persona: {'SÍ' if d.present else 'no'}\nanchura hombros: {d.shoulder_width:.2f} "
@@ -367,6 +378,22 @@ class MascotaApp(ShowBase):
                 if self.preview_tex.getXSize() != w:
                     self.preview_tex.setup2dTexture(w, h, Texture.T_unsigned_byte, Texture.F_rgb)
                 self.preview_tex.setRamImageAs(data, "BGR")
+
+    def _refresh_hint(self, d):
+        """Muestra qué gestos hay; mientras se mantiene uno que va a actuar, pide sostenerlo."""
+        gestures_ready = (self.mode == "auto" and d is not None and d.status == "running"
+                          and d.gesture_status == "ready" and bool(self.gesture_actions))
+        pending = self.glogic.pending(time.monotonic()) if gestures_ready else None
+        if pending and self.msgs["hold"]:
+            _key, progress = pending
+            self.hint_text.setFg((1, 0.85, 0.3, 1))
+            self.hint_text.setText(self.msgs["hold"])
+            self.hold_fill.setSx(max(progress, 0.001))
+            self.hold_bar.show()
+        else:
+            self.hold_bar.hide()
+            self.hint_text.setFg((1, 1, 1, 0.9))
+            self.hint_text.setText(self.msgs["hint"] if gestures_ready else "")
 
     def _hand_text(self, d):
         """Texto de estado de la mano, p. ej. 'Mano detectada: palma abierta'."""

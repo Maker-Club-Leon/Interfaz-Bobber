@@ -38,6 +38,8 @@ flowchart LR
 
 Los controles manuales tienen prioridad sobre los gestos, y los gestos sobre el saludo automático por presencia. La detección de persona y de mano usa la misma cámara y el mismo fotograma.
 
+En modo automático, con los gestos activos, la pantalla explica al visitante qué puede hacer («Saluda con la mano abierta · Cierra el puño para que camine»). Mientras mantiene un gesto que va a actuar, aparece «¡Mantén el gesto!» con una barra que se llena hasta que la mascota responde. Los textos se cambian en `[messages] hint` y `hold`.
+
 ## Modelo y animaciones
 
 El modelo activo es `assets/mascota.gltf`. Es un **modelo de pruebas** que se usará hasta tener el Bobber definitivo con sus animaciones. El archivo incluye sus datos y una textura, y contiene estos clips:
@@ -132,6 +134,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Gestos | `[gestures] enabled`, `min_confidence` | `true`, `0.6` |
 | Confirmación, espera y rearme | `[gestures] confirm_seconds`, `cooldown_seconds`, `release_seconds` | `0.6`, `3.0`, `0.7` s |
 | Acción de cada gesto | `[gestures.actions]` | Palma = `saludo`; puño = `caminar` |
+| Ayuda de gestos en pantalla | `[messages] hint`, `hold` | Texto de palma y puño; `¡Mantén el gesto!`. Vacío = ocultar |
 
 `heading_degrees` gira el modelo sobre su eje vertical. Con `mascota.gltf`, `180` lo deja mirando al público; `0` lo muestra de espaldas y `90`/`-90` de perfil. Si cambias de modelo, prueba esos valores.
 

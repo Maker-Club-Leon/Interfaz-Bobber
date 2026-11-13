@@ -127,6 +127,25 @@ class GestureLogicTests(unittest.TestCase):
         self.assertIsNone(self.logic.update("palma_abierta", 2.5))  # confirmado, cooldown activo
         self.assertEqual(self.logic.update("palma_abierta", 3.6), "palma_abierta")
 
+    def test_pending_indica_progreso_de_confirmacion(self):
+        self.assertIsNone(self.logic.pending(0.0))
+        self.logic.update("palma_abierta", 0.0)
+        self.assertEqual(self.logic.pending(0.3), ("palma_abierta", 0.5))
+        self.assertEqual(self.logic.pending(5.0), ("palma_abierta", 1.0))
+
+    def test_pending_vacio_tras_actuar_y_con_mano_bloqueada(self):
+        self.logic.update("palma_abierta", 0.0)
+        self.logic.update("palma_abierta", 0.6)
+        self.logic.update("palma_abierta", 4.0)  # misma mano sigue levantada: bloqueada
+        self.assertIsNone(self.logic.pending(4.0))
+
+    def test_pending_vacio_durante_cooldown(self):
+        self.logic.update("palma_abierta", 0.0)
+        self.logic.update("palma_abierta", 0.6)
+        self.logic.update("puno_cerrado", 1.0)   # otro gesto, pero aún en cooldown
+        self.assertIsNone(self.logic.pending(2.0))
+        self.assertEqual(self.logic.pending(3.6)[0], "puno_cerrado")
+
     def test_reset_olvida_bloqueo_y_cooldown(self):
         self.logic.update("palma_abierta", 0.0)
         self.logic.update("palma_abierta", 0.6)
@@ -199,8 +218,8 @@ class ConfigTests(unittest.TestCase):
         import re
         from mascota.config import DEFAULTS
         source = (ROOT / "mascota" / "app.py").read_text(encoding="utf-8")
-        used = set(re.findall(r"msgs\[\"(\w+)\"\]", source))
-        self.assertIn("walk", used)
+        used = set(re.findall(r"msgs\[[\"'](\w+)[\"']\]", source))
+        self.assertTrue({"walk", "hint", "hold"} <= used)
         self.assertEqual(used - set(DEFAULTS["messages"]), set())
 
     def test_config_toml_define_los_mismos_mensajes(self):

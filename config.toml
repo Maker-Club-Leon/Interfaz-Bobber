@@ -59,3 +59,7 @@ hello = "¡Hola!"
 after = "¡Disfruta de la feria!"
 manual = "Modo manual"
 walk = "¡Vamos a dar un paseo!"    # mientras camina (puño cerrado o tecla 3)
+# Ayuda de gestos (modo automático con gestos activos). Si cambias [gestures.actions],
+# cambia también este texto. Vacío ("") = no mostrarla.
+hint = "Saluda con la mano abierta  ·  Cierra el puño para que camine"
+hold = "¡Mantén el gesto!"         # mientras se confirma un gesto. Vacío = no mostrarlo

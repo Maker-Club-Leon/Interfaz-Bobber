@@ -84,6 +84,16 @@ class GestureLogic:
         self.last_fire, self.blocked, self.candidate = now, key, None
         return key
 
+    def pending(self, now: float):
+        """Gesto que se está confirmando y que actuará si se mantiene: (clave, progreso 0-1) o None.
+
+        No devuelve nada durante el cooldown (aunque haya candidato, no actuaría todavía) ni para
+        un gesto bloqueado hasta retirar la mano."""
+        if self.candidate is None or now - self.last_fire < self.cooldown_s:
+            return None
+        progress = 1.0 if self.confirm_s <= 0 else min(1.0, (now - self.since) / self.confirm_s)
+        return self.candidate, progress
+
 
 class ActionArbiter:
     """Prioridades entre orígenes de acción: manual > gesto > presencia.

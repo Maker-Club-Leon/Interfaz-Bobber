@@ -25,7 +25,9 @@ DEFAULTS = {
     "render": {"ambient": 0.9, "directional": 0.4},
     "messages": {"idle": "Acércate para saludar", "hello": "¡Hola!",
                  "after": "¡Disfruta de la feria!", "manual": "Modo manual",
-                 "walk": "¡Vamos a dar un paseo!"},
+                 "walk": "¡Vamos a dar un paseo!",
+                 "hint": "Saluda con la mano abierta  ·  Cierra el puño para que camine",
+                 "hold": "¡Mantén el gesto!"},
 }
 
 
