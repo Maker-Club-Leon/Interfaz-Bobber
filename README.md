@@ -65,15 +65,17 @@ El puño necesita que el modelo tenga un clip de caminar. Si el clip configurado
 ## Requisitos
 
 - Windows 10/11.
-- Python de 64 bits, recomendado Python 3.12; el arranque también intenta Python 3.11.
+- **Python 3.12 de 64 bits** ([python.org](https://www.python.org/downloads/windows/)). Es la única versión probada: algunas dependencias fijadas no funcionan con 3.11. Puede haber otras versiones instaladas; `run.bat` busca la 3.12 con `py -3.12`.
 - Cámara web con permiso para aplicaciones de escritorio.
 - Conexión a internet la primera vez para crear el entorno e instalar dependencias. Los modelos de pose y gestos vienen en `assets`.
 
-Dependencias fijadas en `requirements.txt`:
+`requirements.txt` fija la versión exacta de **todas** las dependencias, incluidas las indirectas (numpy, matplotlib…), para que cada instalación sea idéntica a la probada. Las principales son:
 
 - Panda3D `1.10.16` y `panda3d-gltf` `1.3.0` para la ventana 3D y los clips.
 - OpenCV `5.0.0.93` para la cámara y la vista de calibración.
 - MediaPipe `0.10.33` para presencia y gestos.
+
+Para cambiar una versión: edítala en `requirements.txt`, crea un `.venv` nuevo y pasa las pruebas y `run.bat --selftest` antes de hacer commit.
 
 MediaPipe está fijado en `0.10.33` a propósito. Desde `0.10.35`, los paquetes de PyPI envían estadísticas de uso a Google (`play.googleapis.com`): nombre de la tarea, sistema, recuentos y latencias, sin imágenes. Google ha confirmado que no habrá opción para desactivarlo ([google-ai-edge/mediapipe#6291](https://github.com/google-ai-edge/mediapipe/issues/6291)). Con `0.10.33`, en una prueba de 17 minutos, el proceso no abrió ninguna conexión de red. Antes de subir de versión, comprueba que la nueva no incluye ese envío.
 
@@ -83,7 +85,7 @@ Si el equipo ya tenía `.venv` con otra versión, `run.bat` no la cambia por sí
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-`run.bat --selftest` avisa si la versión instalada de MediaPipe no coincide con la de `requirements.txt`.
+`run.bat --selftest` avisa si no se usa Python 3.12 o si alguna versión instalada no coincide con `requirements.txt`.
 
 ## Instalar y ejecutar
 
@@ -171,7 +173,7 @@ La app no se cierra por un fallo de cámara, de gestos ni por un error interno e
 | `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/mascota.gltf` | Restaura el archivo desde el repositorio y revisa `[model] path` |
 | `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`idle`, `jump`, `walk`) |
 | `Error interno en …: …. Bobber vuelve a reposo…` | Un fallo de código en una tecla, un botón, un gesto o el bucle principal. La app no se cierra | Sigue con el stand; si se repite, anota el mensaje y copia el `[ERROR]` completo que aparece en la consola de `run.bat` para depurarlo |
-| `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.11/3.12 de 64 bits o no hay internet | Instala Python desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
+| `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.12 de 64 bits («No se encontro Python 3.12») o no hay internet | Instala Python 3.12 desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
 
 ### Plan manual
 

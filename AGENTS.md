@@ -29,7 +29,7 @@ El modelo activo es `assets/mascota.gltf`; sus clips son `idle`, `jump` y `walk`
 
 ## Dependencias y Windows
 
-- Requisitos probados/documentados: Windows, Python 3.11/3.12 de 64 bits; `requirements.txt` fija Panda3D, panda3d-gltf, OpenCV y MediaPipe.
+- Requisitos probados/documentados: Windows 10/11, Python 3.12 de 64 bits (numpy y contourpy fijados exigen 3.12). `requirements.txt` fija la versión exacta de todas las dependencias, directas e indirectas; si cambias una, prueba en un `.venv` nuevo y mantén la lista completa.
 - No cambies versiones, APIs de MediaPipe o formato de exportación sin comprobar la compatibilidad con Windows y actualizar README e instrucciones.
 - MediaPipe está fijado en `0.10.33` porque `0.10.35` envía telemetría a `play.googleapis.com` sin opción para desactivarla. No lo actualices sin comprobar que la nueva rueda no contiene `clearcut`/`play.googleapis.com` y sin una prueba de red de más de 16 minutos.
 - Los modelos de MediaPipe están en `assets`. La descarga explícita se hace con `run.bat --descargar-modelos`; el análisis normal no debe necesitar internet si existen los modelos.

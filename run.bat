@@ -3,12 +3,14 @@ rem Arranque en Windows: crea el entorno la primera vez e inicia la app.
 rem Opciones:  run.bat --selftest | --calibrar | --manual | --ventana | --descargar-modelos
 cd /d "%~dp0"
 if not exist ".venv\Scripts\python.exe" (
-  echo Creando entorno virtual...
+  echo Creando entorno virtual con Python 3.12...
   py -3.12 -m venv .venv >nul 2>&1
-  if errorlevel 1 py -3.11 -m venv .venv >nul 2>&1
-  if errorlevel 1 python -m venv .venv
   if not exist ".venv\Scripts\python.exe" (
-    echo No se pudo crear el entorno. Instala Python 3.11 o 3.12 de 64 bits desde python.org
+    python -c "import sys; sys.exit(sys.version_info[:2] != (3, 12) or sys.maxsize < 2**32)" >nul 2>&1
+    if not errorlevel 1 python -m venv .venv
+  )
+  if not exist ".venv\Scripts\python.exe" (
+    echo No se encontro Python 3.12 de 64 bits. Instalalo desde python.org y vuelve a ejecutar run.bat.
     pause & exit /b 1
   )
   ".venv\Scripts\python.exe" -m pip install --upgrade pip

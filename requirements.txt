@@ -1,4 +1,9 @@
-# Versiones instaladas y comprobadas en Windows x64 con Python 3.12.
+# Todas las versiones fijadas: así cada instalación es idéntica a la probada.
+# Probado en Windows 10/11 x64 con Python 3.12 (numpy y contourpy exigen 3.12 o superior).
+# Para cambiar una versión: actualízala aquí, crea un .venv nuevo y pasa las pruebas y
+# run.bat --selftest antes de hacer commit.
+
+# --- Dependencias directas ---
 panda3d==1.10.16
 panda3d-gltf==1.3.0
 opencv-python==5.0.0.93
@@ -6,3 +11,24 @@ opencv-python==5.0.0.93
 # play.googleapis.com sin opción para desactivarla (google-ai-edge/mediapipe#6291).
 # No subir de versión sin comprobar que la nueva no incluye ese envío (ver README).
 mediapipe==0.10.33
+
+# --- Dependencias indirectas (las instalan las anteriores) ---
+absl-py==2.5.1
+cffi==2.1.1
+contourpy==1.4.0
+cycler==0.12.1
+flatbuffers==25.12.19
+fonttools==4.68.0
+kiwisolver==1.5.1
+matplotlib==3.11.2
+numpy==2.5.4
+opencv-contrib-python==5.0.0.93
+packaging==26.3
+panda3d-simplepbr==0.13.1
+pillow==13.0.0
+pycparser==3.12
+pyparsing==3.3.3
+python-dateutil==4.0.0
+sounddevice==0.5.6
+typing_extensions==4.16.0
+tzdata==2026.6

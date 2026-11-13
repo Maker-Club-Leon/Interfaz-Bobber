@@ -35,6 +35,27 @@ def main():
             ".venv\\Scripts\\python.exe -m pip install -r requirements.txt")
         return installed
 
+    @step("Python 3.12 y versiones de requirements.txt")
+    def _():
+        import re
+        from importlib.metadata import PackageNotFoundError, version
+        assert sys.version_info[:2] == (3, 12) and sys.maxsize > 2**32, (
+            f"Python {sys.version.split()[0]}; el proyecto necesita Python 3.12 de 64 bits. "
+            "Borra .venv e instala Python 3.12 antes de ejecutar run.bat")
+        req = resolve("requirements.txt").read_text(encoding="utf-8")
+        pins = re.findall(r"^([A-Za-z0-9_.-]+)==(\S+)", req, re.MULTILINE)
+        wrong = []
+        for name, want in pins:
+            try:
+                have = version(name)
+            except PackageNotFoundError:
+                have = "no instalado"
+            if have != want:
+                wrong.append(f"{name} {have} (pide {want})")
+        assert not wrong, ("; ".join(wrong) + ". Actualiza con: "
+                           ".venv\\Scripts\\python.exe -m pip install -r requirements.txt")
+        return f"{len(pins)} paquetes coinciden"
+
     @step("Lógica de saludo")
     def _():
         g = GreetingLogic(1.0, 3.0)
