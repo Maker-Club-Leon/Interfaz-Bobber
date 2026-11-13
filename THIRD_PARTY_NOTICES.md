@@ -42,7 +42,7 @@ No se incluyen en el repositorio; `run.bat` las instala en `.venv` desde PyPI. L
 | `panda3d-simplepbr` (dependencia de `panda3d-gltf`) | 0.13.1 | BSD-3-Clause |
 | `opencv-python` | 5.0.0.93 | Apache 2.0 |
 | `opencv-contrib-python` (dependencia de `mediapipe`) | 5.0.0.93 | Apache 2.0 |
-| `mediapipe` | 0.10.35 | Apache 2.0 |
+| `mediapipe` | 0.10.33 | Apache 2.0 |
 | `numpy` (versión instalada, no fijada) | 2.5.4 | BSD-3-Clause y otras permisivas (0BSD, MIT, Zlib, CC0) |
 
 Las ruedas de `opencv-python` incluyen FFmpeg (LGPL) y otras bibliotecas; sus avisos están en `cv2/LICENSE-3RD-PARTY.txt` dentro del paquete instalado. Esto solo importa si se distribuye una copia de `.venv` o un ejecutable empaquetado; el repositorio no lo hace.

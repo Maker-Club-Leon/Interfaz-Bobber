@@ -2,4 +2,7 @@
 panda3d==1.10.16
 panda3d-gltf==1.3.0
 opencv-python==5.0.0.93
-mediapipe==0.10.35
+# 0.10.33 a propósito: desde 0.10.35 la rueda de PyPI envía telemetría de uso a
+# play.googleapis.com sin opción para desactivarla (google-ai-edge/mediapipe#6291).
+# No subir de versión sin comprobar que la nueva no incluye ese envío (ver README).
+mediapipe==0.10.33

@@ -24,6 +24,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
 - El código tiene licencia MIT y `THIRD_PARTY_NOTICES.md` recoge las licencias de terceros, pero falta confirmar el origen del modelo de pruebas actual. La licencia del clasificador de gestos de MediaPipe se deduce por indicios, sin declaración expresa de Google.
+- MediaPipe está fijado en `0.10.33` porque `0.10.35` envía telemetría de uso a Google sin opción para desactivarla. Antes de actualizarlo hay que comprobar que la nueva versión no la incluye. Google no la eliminará ([#6291](https://github.com/google-ai-edge/mediapipe/issues/6291)), así que a la larga habrá que compilar MediaPipe o bloquear `play.googleapis.com`.
 - `mascota.gltf` es un modelo de pruebas; el Bobber definitivo, con sus animaciones, está pendiente.
 - La orientación (`heading_degrees = 180`) se comprobó con un render fuera de pantalla del modelo; falta verla en el monitor del stand.
 
@@ -44,7 +45,9 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 
 - [ ] Instalar desde cero en un PC Windows limpio usando solo el README y `run.bat`.
 - [x] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest` en el PC de desarrollo con su webcam (2026-11-13: 26 pruebas y selftest «TODO CORRECTO»; un fotograma 640x480, persona detectada).
-- [ ] Repetir el `selftest` en el PC y con la cámara del stand.
+- [x] Abrir `run.bat --calibrar` en el PC de desarrollo: persona, palma y puño se ven bien a simple vista (2026-11-13). Falta medir la distancia de detección en el stand.
+- [x] Revisar conexiones de red: MediaPipe `0.10.35` intentaba enviar telemetría; fijado `0.10.33`, sin conexiones en 17 minutos de prueba (2026-11-13).
+- [ ] Repetir el `selftest` en el PC y con la cámara del stand (actualizando antes `.venv` con `pip install -r requirements.txt`).
 - [ ] Probar la webcam real: permisos, cambio a manual, cierre/reintento, distancia de detección y recuperación tras ausencias.
 - [ ] Calibrar iluminación, encuadre, `min_shoulder_width`, `min_visibility` y `interval_ms` en el stand.
 - [ ] Probar palma y puño varias veces, y comprobar cooldown, retirada de mano y ausencia de solapamiento.

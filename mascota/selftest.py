@@ -22,6 +22,19 @@ def main():
     cfg = load_config()
     path = resolve(cfg["model"]["path"])
 
+    @step("Versión de MediaPipe fijada (sin telemetría)")
+    def _():
+        import re
+        from importlib.metadata import version
+        req = resolve("requirements.txt").read_text(encoding="utf-8")
+        m = re.search(r"^mediapipe==(\S+)", req, re.MULTILINE)
+        assert m, "requirements.txt no fija la versión de mediapipe"
+        installed = version("mediapipe")
+        assert installed == m.group(1), (
+            f"instalada {installed}, requirements.txt pide {m.group(1)}. Actualiza con: "
+            ".venv\\Scripts\\python.exe -m pip install -r requirements.txt")
+        return installed
+
     @step("Lógica de saludo")
     def _():
         g = GreetingLogic(1.0, 3.0)

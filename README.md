@@ -2,7 +2,16 @@
 
 Aplicación de escritorio en Python que muestra una mascota 3D y reacciona cuando alguien se acerca a la cámara o hace un gesto con la mano. Está pensada para funcionar en un stand, con controles manuales disponibles si la cámara falla.
 
-El procesamiento de cámara se hace en el propio ordenador. La aplicación no identifica personas, no guarda imágenes ni envía fotogramas a internet.
+El procesamiento de cámara se hace en el propio ordenador. La aplicación no identifica personas, no guarda imágenes ni envía fotogramas a internet. Con las versiones fijadas en `requirements.txt`, y con los modelos de `assets` presentes, el uso normal no se conecta a internet (ver [Requisitos](#requisitos)).
+
+> [!IMPORTANT]
+> **Si instalaste el proyecto (carpeta `.venv`) antes del 13 de noviembre de 2026**, tu entorno tiene MediaPipe `0.10.35`, que envía estadísticas de uso a Google. Cámbialo a la versión fijada ejecutando esto una vez desde la carpeta del proyecto:
+>
+> ```powershell
+> .venv\Scripts\python.exe -m pip install -r requirements.txt
+> ```
+>
+> Después comprueba con `run.bat --selftest` que la línea «Versión de MediaPipe fijada (sin telemetría)» sale como `[OK] 0.10.33`. Más detalles en [Requisitos](#requisitos).
 
 ## Qué hace
 
@@ -62,7 +71,17 @@ Dependencias fijadas en `requirements.txt`:
 
 - Panda3D `1.10.16` y `panda3d-gltf` `1.3.0` para la ventana 3D y los clips.
 - OpenCV `5.0.0.93` para la cámara y la vista de calibración.
-- MediaPipe `0.10.35` para presencia y gestos.
+- MediaPipe `0.10.33` para presencia y gestos.
+
+MediaPipe está fijado en `0.10.33` a propósito. Desde `0.10.35`, los paquetes de PyPI envían estadísticas de uso a Google (`play.googleapis.com`): nombre de la tarea, sistema, recuentos y latencias, sin imágenes. Google ha confirmado que no habrá opción para desactivarlo ([google-ai-edge/mediapipe#6291](https://github.com/google-ai-edge/mediapipe/issues/6291)). Con `0.10.33`, en una prueba de 17 minutos, el proceso no abrió ninguna conexión de red. Antes de subir de versión, comprueba que la nueva no incluye ese envío.
+
+Si el equipo ya tenía `.venv` con otra versión, `run.bat` no la cambia por sí solo. Actualízala con:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+`run.bat --selftest` avisa si la versión instalada de MediaPipe no coincide con la de `requirements.txt`.
 
 ## Instalar y ejecutar
 
