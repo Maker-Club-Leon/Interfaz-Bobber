@@ -47,7 +47,8 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 
 ## Prioridad 1 — validar en las condiciones de la feria
 
-- [ ] Instalar desde cero en un PC Windows limpio usando solo el README y `run.bat`.
+- [x] Instalar desde un clon limpio de GitHub con `run.bat --selftest` en el PC de desarrollo (2026-11-13): eligió Python 3.12 aunque `py` usa 3.15 por defecto, instaló `mediapipe 0.10.33` sin conflictos, ni rastro de `.venv` en Git, 31 pruebas y selftest «TODO CORRECTO» en 56 s. Los paquetes salieron de la caché de pip.
+- [ ] Repetirlo en un PC Windows limpio (sin Python ni caché de pip), usando solo el README.
 - [x] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest` en el PC de desarrollo con su webcam (2026-11-13: 26 pruebas y selftest «TODO CORRECTO»; un fotograma 640x480, persona detectada).
 - [x] Abrir `run.bat --calibrar` en el PC de desarrollo: persona, palma y puño se ven bien a simple vista (2026-11-13). Falta medir la distancia de detección en el stand.
 - [x] Revisar conexiones de red: MediaPipe `0.10.35` intentaba enviar telemetría; fijado `0.10.33`, sin conexiones en 17 minutos de prueba (2026-11-13).
