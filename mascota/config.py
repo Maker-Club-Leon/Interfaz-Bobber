@@ -21,7 +21,7 @@ DEFAULTS = {
                     "pulgar_arriba": "ninguna", "pulgar_abajo": "ninguna", "victoria": "ninguna",
                     "te_quiero": "ninguna"},
     },
-    "window": {"fullscreen": True, "font": ""},
+    "window": {"fullscreen": True, "font": "", "hide_controls": True},
     "render": {"ambient": 0.9, "directional": 0.4},
     "messages": {"idle": "Acércate para saludar", "hello": "¡Hola!",
                  "after": "¡Disfruta de la feria!", "manual": "Modo manual",

@@ -47,6 +47,7 @@ te_quiero = "ninguna"
 
 [window]
 fullscreen = true          # ventana sin bordes a pantalla completa (F11 la alterna)
+hide_controls = true       # en pantalla completa oculta botones, cursor y estado al público; C o F11 los muestran
 font = ""                  # opcional: ruta a un .ttf. Vacío = Segoe UI/Arial de Windows
 
 [render]

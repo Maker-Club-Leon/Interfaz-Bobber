@@ -111,11 +111,13 @@ El modo de calibración y el `selftest` acceden a la cámara; cierra antes otras
 | `2` / Saludo | Prueba el saludo manualmente |
 | `3` / Caminar | Prueba el clip de caminar |
 | `M` / Auto-Manual | Activa o detiene la cámara |
-| `C` / Calibración | Muestra cámara, presencia, puntos de mano y confianza |
+| `C` / Calibración | Muestra cámara, presencia, puntos de mano y confianza, además de los botones y el estado |
 | `F11` / Pantalla | Alterna pantalla completa y ventana |
 | `Esc` o `Q` | Cierra la aplicación |
 
-Si la cámara falla, la app cambia a modo manual y muestra el error. Los botones siguen disponibles.
+**Modo stand:** a pantalla completa, el público solo ve la mascota, el mensaje y la ayuda de gestos. Los botones, el cursor y la línea de estado se ocultan para que nadie los pulse, y el personal maneja la app con el teclado. `C` (calibración) o `F11` (ventana) los vuelven a mostrar. Para verlos siempre, pon `[window] hide_controls = false`.
+
+Si la cámara falla, la app cambia a modo manual y muestra el error. Las teclas, y los botones cuando están visibles, siguen disponibles.
 
 ## Configuración
 
@@ -135,6 +137,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Confirmación, espera y rearme | `[gestures] confirm_seconds`, `cooldown_seconds`, `release_seconds` | `0.6`, `3.0`, `0.7` s |
 | Acción de cada gesto | `[gestures.actions]` | Palma = `saludo`; puño = `caminar` |
 | Ayuda de gestos en pantalla | `[messages] hint`, `hold` | Texto de palma y puño; `¡Mantén el gesto!`. Vacío = ocultar |
+| Modo stand (ocultar controles) | `[window] hide_controls` | `true`: en pantalla completa sin botones, cursor ni estado |
 
 `heading_degrees` gira el modelo sobre su eje vertical. Con `mascota.gltf`, `180` lo deja mirando al público; `0` lo muestra de espaldas y `90`/`-90` de perfil. Si cambias de modelo, prueba esos valores.
 
@@ -148,14 +151,14 @@ Este procedimiento se basa en cómo reacciona el código ante cada fallo. Aún h
 
 1. Conecta la webcam y cierra otras aplicaciones que puedan usarla (Teams, Zoom, Cámara de Windows…).
 2. Ejecuta `run.bat --calibrar`. Comprueba que se detecta a una persona a la distancia deseada y que la palma y el puño se reconocen. Cierra la ventana al terminar: la app y la calibración no deben usar la cámara a la vez.
-3. Ejecuta `run.bat`. Arranca a pantalla completa en modo automático y arriba a la izquierda debe aparecer `Modo auto · cámara activa`.
+3. Ejecuta `run.bat`. Arranca a pantalla completa en modo automático, sin botones a la vista. Pulsa `C`: arriba a la izquierda debe aparecer `Modo auto · cámara activa`. Vuelve a pulsar `C` para ocultarlo.
 4. Comprueba que Bobber mira al público. Si no, ajusta `heading_degrees` en `config.toml` y reinicia.
 5. Pulsa `2` y `3` para probar el saludo y caminar, y `1` para volver a reposo. Después acércate y prueba palma y puño.
 6. Si aparece un texto de aviso en pantalla, consulta la tabla siguiente antes de abrir.
 
 ### Solución de problemas
 
-La app no se cierra por un fallo de cámara, de gestos ni por un error interno en una acción: pasa a modo manual o desactiva solo lo que falla, y muestra el motivo en pantalla. Los botones y las teclas `1`, `2` y `3` siempre siguen disponibles.
+La app no se cierra por un fallo de cámara, de gestos ni por un error interno en una acción: pasa a modo manual o desactiva solo lo que falla, y muestra el motivo en pantalla. Las teclas `1`, `2` y `3` siempre siguen disponibles (y los botones, con `C` o en ventana).
 
 | Qué ves | Qué ha pasado | Qué hacer |
 | --- | --- | --- |

@@ -277,6 +277,21 @@ class MascotaApp(ShowBase):
         if self.detector: self.detector.preview_enabled = self.debug
         for n in (self.debug_text, self.preview_card):
             n.show() if self.debug else n.hide()
+        self._apply_controls_visibility()
+
+    def _controls_visible(self):
+        """En modo stand (pantalla completa) el público solo ve la mascota; C o F11 muestran los controles."""
+        return not (self.kiosk and self.cfg["window"]["hide_controls"]) or self.debug
+
+    def _apply_controls_visibility(self):
+        visible = self._controls_visible()
+        for n in self.buttons + [self.status]:
+            n.show() if visible else n.hide()
+        # Sin botones, los avisos bajan al hueco que dejan; con botones, van por encima
+        self.err_text.setPos(0, 0.37 if visible else 0.12)
+        if hasattr(self.win, "requestProperties"):      # un buffer sin ventana no tiene cursor
+            wp = WindowProperties(); wp.setCursorHidden(not visible)
+            self.win.requestProperties(wp)
 
     def _tick(self, task):
         now = time.monotonic()
@@ -416,6 +431,7 @@ class MascotaApp(ShowBase):
         else:
             wp.setUndecorated(False); wp.setOrigin(80, 80); wp.setSize(1280, 720)
         self.win.requestProperties(wp)
+        self._apply_controls_visibility()
 
     def toggle_window(self):
         self.kiosk = not self.kiosk
