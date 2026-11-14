@@ -23,7 +23,7 @@ El modelo activo es `assets/mascota.gltf`; sus clips son `idle`, `jump` y `walk`
 - El vídeo debe permanecer local. No guardar ni enviar fotogramas, no añadir identificación o reconocimiento de identidad.
 - No abrir una segunda cámara. `PresenceDetector` es dueño de `VideoCapture`; solicita `stop()`, espera el cierre del hilo y libera todos los recursos en `finally`.
 - Si la cámara falla, conserva el modo manual y muestra un mensaje que ayude a recuperarla.
-- Respeta la prioridad implementada: controles manuales > gestos > presencia. Evita que dos acciones de mascota se solapen.
+- Respeta la prioridad implementada: controles manuales > gestos > presencia > modo reclamo. El reclamo nunca interrumpe nada y cualquier otra acción lo interrumpe. Evita que dos acciones de mascota se solapen.
 - Mantén configurables umbrales y tiempos; no hardcodees ajustes del stand cuando exista una opción en `config.toml`.
 - Conserva los modelos y materiales originales. No reemplaces la mascota por una imagen ni conviertas el modelo sin necesidad.
 

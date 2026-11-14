@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from mascota.behavior import ActionArbiter, GestureLogic, GreetingLogic  # noqa: E402
+from mascota.behavior import ActionArbiter, AttractLogic, GestureLogic, GreetingLogic  # noqa: E402
 from mascota.config import load_config, resolve  # noqa: E402
 from mascota.modelio import inspect_glb, resolve_clips  # noqa: E402
 
@@ -205,11 +205,99 @@ class ActionArbiterTests(unittest.TestCase):
             self.assertTrue(arb.request("reposo", "manual", 1.0, 0.5))
             self.assertEqual((arb.name, arb.src), ("reposo", "manual"))
 
+    def test_reclamo_solo_si_no_hay_nada_en_curso(self):
+        for src in ("attract", "presence", "gesture", "manual"):
+            arb = ActionArbiter()
+            arb.request("caminar", src, 0.0, 4.0)
+            self.assertFalse(arb.request("saludo", "attract", 1.0, 1.0))
+        self.assertTrue(ActionArbiter().request("saludo", "attract", 0.0, 1.0))
+
+    def test_cualquier_origen_interrumpe_un_reclamo(self):
+        for src in ("presence", "gesture", "manual"):
+            arb = ActionArbiter()
+            arb.request("caminar", "attract", 0.0, 4.0)
+            self.assertTrue(arb.request("saludo", src, 1.0, 1.0))
+            self.assertEqual(arb.src, src)
+
+    def test_presencia_sigue_sin_interrumpir_gesto_ni_manual(self):
+        for src in ("gesture", "manual"):
+            arb = ActionArbiter()
+            arb.request("caminar", src, 0.0, 4.0)
+            self.assertFalse(arb.request("saludo", "presence", 1.0, 1.0))
+
     def test_clear_libera_el_arbitro(self):
         self.arb.request("caminar", "manual", 0.0, 4.0)
         self.arb.clear()
         self.assertFalse(self.arb.busy(1.0))
         self.assertTrue(self.arb.request("saludo", "presence", 1.0, 2.0))
+
+
+class AttractLogicTests(unittest.TestCase):
+    """Caso A: 15 s sin nadie. Caso B: 45 s sin interacción aunque pase gente."""
+
+    def setUp(self):
+        self.logic = AttractLogic(empty_s=15.0, idle_s=45.0)
+
+    def up(self, t, someone=False, hand=False, busy=False):
+        return self.logic.update(someone, hand, busy, t)
+
+    def test_a_actua_tras_15_s_sin_nadie(self):
+        self.assertIsNone(self.up(0.0))
+        self.assertIsNone(self.up(14.9))
+        self.assertEqual(self.up(15.0), "empty")
+
+    def test_a_repite_cada_15_s_mientras_no_haya_nadie(self):
+        self.up(0.0)
+        self.assertEqual(self.up(15.0), "empty")
+        self.assertIsNone(self.up(25.0))
+        self.assertEqual(self.up(30.0), "empty")
+
+    def test_a_alguien_que_pasa_reinicia_la_cuenta_de_vacio(self):
+        self.up(0.0)
+        self.up(10.0, someone=True)
+        self.assertIsNone(self.up(20.0))
+        self.assertEqual(self.up(25.0), "empty")
+
+    def test_b_gente_pasando_sin_interactuar_45_s(self):
+        self.up(0.0)
+        for t in range(1, 45):                   # siempre hay alguien delante: el caso A no actúa
+            self.assertIsNone(self.up(float(t), someone=True))
+        self.assertEqual(self.up(45.0, someone=True), "idle")
+
+    def test_b_un_gesto_o_tecla_reinicia_la_cuenta(self):
+        self.up(0.0, someone=True)
+        self.logic.interaction(30.0)
+        self.assertIsNone(self.up(60.0, someone=True))
+        self.assertEqual(self.up(75.0, someone=True), "idle")
+
+    def test_b_el_saludo_por_presencia_no_cuenta_como_interaccion(self):
+        self.up(0.0, someone=True)
+        self.up(1.0, someone=True, busy=True)     # saludo automático en curso
+        self.assertIsNone(self.up(2.0, someone=True))
+        self.assertEqual(self.up(45.0, someone=True), "idle")
+
+    def test_nunca_con_accion_en_curso(self):
+        self.up(0.0)
+        self.assertIsNone(self.up(100.0, busy=True))
+
+    def test_nunca_con_una_mano_a_la_vista(self):
+        self.up(0.0, someone=True)
+        self.assertIsNone(self.up(60.0, someone=True, hand=True))
+        self.assertEqual(self.up(61.0, someone=True), "idle")
+
+    def test_accion_en_curso_reinicia_la_cuenta_de_vacio(self):
+        self.up(0.0)
+        self.up(14.0, busy=True)                 # p. ej. el personal pulsó 3
+        self.assertIsNone(self.up(20.0))
+        self.assertEqual(self.up(29.0), "empty")
+
+    def test_cada_caso_se_desactiva_con_cero(self):
+        solo_b = AttractLogic(0, 45.0)
+        self.assertIsNone(solo_b.update(False, False, False, 0.0))
+        self.assertIsNone(solo_b.update(False, False, False, 30.0))
+        self.assertEqual(solo_b.update(False, False, False, 45.0), "idle")
+        nada = AttractLogic(0, 0)
+        self.assertFalse(any(nada.update(False, False, False, t) for t in range(0, 1000, 10)))
 
 
 class ConfigTests(unittest.TestCase):

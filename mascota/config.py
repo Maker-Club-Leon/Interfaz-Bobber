@@ -22,13 +22,15 @@ DEFAULTS = {
                     "pulgar_arriba": "ninguna", "pulgar_abajo": "ninguna", "victoria": "ninguna",
                     "te_quiero": "ninguna"},
     },
+    "attract": {"empty_seconds": 15.0, "idle_seconds": 45.0, "actions": ["saludo", "caminar"]},
     "window": {"fullscreen": True, "font": "", "hide_controls": True, "keep_awake": True},
     "render": {"ambient": 0.9, "directional": 0.4},
     "messages": {"idle": "Acércate para saludar", "hello": "¡Hola!",
                  "after": "¡Disfruta de la feria!", "manual": "Modo manual",
                  "walk": "¡Vamos a dar un paseo!",
                  "hint": "Saluda con la mano abierta  ·  Cierra el puño para que camine",
-                 "hold": "¡Mantén el gesto!"},
+                 "hold": "¡Mantén el gesto!",
+                 "attract": "¡Ven a saludarme!"},
 }
 
 

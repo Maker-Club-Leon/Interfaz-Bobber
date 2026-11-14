@@ -46,6 +46,11 @@ pulgar_abajo = "ninguna"
 victoria = "ninguna"
 te_quiero = "ninguna"
 
+[attract]                  # modo reclamo: llamar la atención (solo en modo automático)
+empty_seconds = 15.0       # nadie delante este tiempo -> una acción (0 = desactivado)
+idle_seconds = 45.0        # nadie interactúa (gesto o tecla) este tiempo, aunque pase gente -> una acción (0 = desactivado)
+actions = ["saludo", "caminar"]   # se alternan; "caminar" solo si el modelo tiene ese clip
+
 [window]
 fullscreen = true          # ventana sin bordes a pantalla completa (F11 la alterna)
 hide_controls = true       # en pantalla completa oculta botones, cursor y estado al público; C o F11 los muestran
@@ -66,3 +71,4 @@ walk = "¡Vamos a dar un paseo!"    # mientras camina (puño cerrado o tecla 3)
 # cambia también este texto. Vacío ("") = no mostrarla.
 hint = "Saluda con la mano abierta  ·  Cierra el puño para que camine"
 hold = "¡Mantén el gesto!"         # mientras se confirma un gesto. Vacío = no mostrarlo
+attract = "¡Ven a saludarme!"      # durante el modo reclamo. Vacío = mensaje normal de la acción

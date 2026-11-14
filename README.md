@@ -40,9 +40,16 @@ flowchart LR
     A --> R[Animación de la mascota]
 ```
 
-Los controles manuales tienen prioridad sobre los gestos, y los gestos sobre el saludo automático por presencia. La detección de persona y de mano usa la misma cámara y el mismo fotograma.
+Los controles manuales tienen prioridad sobre los gestos, los gestos sobre el saludo automático por presencia, y este sobre el modo reclamo. La detección de persona y de mano usa la misma cámara y el mismo fotograma.
 
 En modo automático, con los gestos activos, la pantalla explica al visitante qué puede hacer («Saluda con la mano abierta · Cierra el puño para que camine»). Mientras mantiene un gesto que va a actuar, aparece «¡Mantén el gesto!» con una barra que se llena hasta que la mascota responde. Los textos se cambian en `[messages] hint` y `hold`.
+
+**Modo reclamo:** para llamar la atención, la mascota hace una de sus acciones (alterna saludo y paseo) con el mensaje «¡Ven a saludarme!» en dos casos:
+
+- **Nadie delante durante 15 s** (ni persona ni mano).
+- **Nadie interactúa durante 45 s**, aunque haya gente delante. Así se reclama también a quien pasa sin mirar. Interactuar es hacer un gesto o usar las teclas; el saludo automático al detectar a alguien no cuenta.
+
+Nunca actúa con otra acción en curso ni con una mano a la vista, para no estorbar a quien está haciendo un gesto. Es la prioridad más baja: cualquier otra acción lo interrumpe, y si alguien se acerca a mitad de un reclamo, se le saluda. Solo funciona en modo automático. Se ajusta en `[attract] empty_seconds` e `idle_seconds`; `0` desactiva cada caso.
 
 ## Modelo y animaciones
 
@@ -144,6 +151,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Confirmación, espera y rearme | `[gestures] confirm_seconds`, `cooldown_seconds`, `release_seconds` | `0.6`, `3.0`, `0.7` s |
 | Acción de cada gesto | `[gestures.actions]` | Palma = `saludo`; puño = `caminar` |
 | Ayuda de gestos en pantalla | `[messages] hint`, `hold` | Texto de palma y puño; `¡Mantén el gesto!`. Vacío = ocultar |
+| Modo reclamo | `[attract] empty_seconds`, `idle_seconds`, `actions`; `[messages] attract` | `15` s sin nadie, `45` s sin interacción, saludo y caminar, `¡Ven a saludarme!` (`0` = desactivado) |
 | Modo stand (ocultar controles) | `[window] hide_controls` | `true`: en pantalla completa sin botones, cursor ni estado |
 | Evitar suspensión | `[window] keep_awake` | `true`: mientras la app está abierta, Windows no se suspende ni apaga la pantalla |
 

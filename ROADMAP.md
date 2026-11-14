@@ -76,7 +76,8 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
 - [ ] Sustituir la captura cuando esté el Bobber definitivo; opcional: vídeo corto del saludo y del paseo.
 - [ ] Completar la guía de solución de problemas con lo que ocurra en pruebas reales en el stand.
-- [ ] Modo reclamo: si pasa un rato sin nadie, la mascota hace una acción existente para llamar la atención.
+- [x] Modo reclamo: la mascota alterna saludo y paseo con «¡Ven a saludarme!» tras 15 s sin nadie o tras 45 s sin interacción aunque pase gente; prioridad mínima (`[attract]`).
+- [ ] Ajustar en el stand los tiempos del modo reclamo según el paso de gente.
 - [ ] Contador anónimo del stand (solo números de saludos y gestos por hora, sin imágenes ni personas).
 - [ ] Opcional: `run-stand.bat` que reabra la app si se cierra; fondo con la marca del club y QR.
 

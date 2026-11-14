@@ -95,13 +95,56 @@ class GestureLogic:
         return self.candidate, progress
 
 
+class AttractLogic:
+    """Modo reclamo: pide una acción para llamar la atención en dos casos.
+
+    A) `empty_s` segundos seguidos sin nadie delante (ni persona ni mano) y sin acciones en curso.
+    B) `idle_s` segundos sin ninguna interacción (gesto o tecla), aunque haya gente pasando: quien pasa
+       por delante sin mirar no cuenta. El saludo automático por presencia no es una interacción.
+
+    Nunca actúa con una acción en curso ni con una mano a la vista (alguien puede estar haciendo un
+    gesto). Tras cada reclamo, ambas cuentas empiezan de cero. Un valor <= 0 desactiva ese caso.
+    update() devuelve "empty", "idle" o None; interaction(now) registra una interacción."""
+
+    def __init__(self, empty_s: float, idle_s: float):
+        self.empty_s, self.idle_s = float(empty_s), float(idle_s)
+        self.reset()
+
+    def reset(self):
+        self.empty_since = self.last_interaction = None
+
+    def interaction(self, now: float):
+        self.last_interaction = now
+
+    def update(self, someone: bool, hand: bool, busy: bool, now: float):
+        if self.empty_s <= 0 and self.idle_s <= 0:
+            return None
+        if self.empty_since is None:
+            self.empty_since = now
+        if self.last_interaction is None:
+            self.last_interaction = now
+        if someone or busy:
+            self.empty_since = now
+        if busy or hand:
+            return None
+        reason = None
+        if self.empty_s > 0 and not someone and now - self.empty_since >= self.empty_s:
+            reason = "empty"
+        elif self.idle_s > 0 and now - self.last_interaction >= self.idle_s:
+            reason = "idle"
+        if reason:
+            self.empty_since = self.last_interaction = now
+        return reason
+
+
 class ActionArbiter:
-    """Prioridades entre orígenes de acción: manual > gesto > presencia.
+    """Prioridades entre orígenes de acción: manual > gesto > presencia > reclamo.
 
     - 'manual' (botones/teclas): siempre se ejecuta.
     - 'gesture': se ejecuta salvo que otra acción de gesto siga en curso (puede interrumpir un saludo
       por presencia, porque es una petición deliberada).
-    - 'presence': solo si no hay ninguna acción en curso (nunca interrumpe nada).
+    - 'presence': solo si no hay acción en curso, salvo un reclamo (alguien ha llegado: se le saluda).
+    - 'attract': solo si no hay ninguna acción en curso (nunca interrumpe nada).
     """
 
     def __init__(self):
@@ -115,7 +158,9 @@ class ActionArbiter:
         return self.name is not None and now < self.until
 
     def request(self, name: str, src: str, now: float, duration: float) -> bool:
-        if src == "presence" and self.busy(now):
+        if src == "attract" and self.busy(now):
+            return False
+        if src == "presence" and self.busy(now) and self.src != "attract":
             return False
         if src == "gesture" and self.busy(now) and self.src in ("gesture", "manual"):
             return False

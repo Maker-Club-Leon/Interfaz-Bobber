@@ -10,7 +10,7 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (AmbientLight, CardMaker, DirectionalLight, Texture, TextNode,
                           WindowProperties, loadPrcFileData)
 
-from .behavior import ActionArbiter, GestureLogic, GreetingLogic
+from .behavior import ActionArbiter, AttractLogic, GestureLogic, GreetingLogic
 from .config import resolve
 from .detector import GESTURE_LABELS, PresenceDetector
 from .modelio import inspect_glb, load_model
@@ -33,6 +33,9 @@ class MascotaApp(ShowBase):
         g = cfg["gestures"]                  # gestos: confirmación, espera entre acciones y prioridades
         self.glogic = GestureLogic(g["confirm_seconds"], g["cooldown_seconds"], g["release_seconds"])
         self.arbiter = ActionArbiter()
+        a = cfg["attract"]                    # modo reclamo: sin nadie / sin interacción
+        self.attract = AttractLogic(a["empty_seconds"], a["idle_seconds"])
+        self._attract_turn = 0
         self.gesture_actions = {k: v for k, v in g["actions"].items() if v not in ("", "ninguna")}
         self._gesture_err_shown = False
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
@@ -196,11 +199,14 @@ class MascotaApp(ShowBase):
         dur = self.model.getDuration(self.clip["saludo"]) if has_clip else 1.0
         if not self.arbiter.request("saludo", src, time.monotonic(), dur):
             return False                      # hay una acción de mayor prioridad en curso
+        self._note_interaction(src)
         self._stop_all()
         self._say(self.msgs["hello"])
         if has_clip:
             self.model.play(self.clip["saludo"])
-            self.taskMgr.doMethodLater(dur, self._safe(lambda t: self._after_greet(), "fin del saludo"), "after-greet")
+            # Tras un reclamo no hay nadie a quien desear buena feria: se vuelve al mensaje de espera
+            done = (lambda t: self.idle()) if src == "attract" else (lambda t: self._after_greet())
+            self.taskMgr.doMethodLater(dur, self._safe(done, "fin del saludo"), "after-greet")
         else:
             self.fb_greet.start()
         return True
@@ -218,6 +224,7 @@ class MascotaApp(ShowBase):
         dur = self.cfg["gestures"]["walk_seconds"]
         if not self.arbiter.request("caminar", src, time.monotonic(), dur):
             return False
+        self._note_interaction(src)
         self._stop_all()
         self._say(self.msgs["walk"])
         self.model.loop(self.clip["caminar"])
@@ -226,6 +233,23 @@ class MascotaApp(ShowBase):
 
     def _after_walk(self):
         self.idle(announce=True)
+
+    def _note_interaction(self, src):
+        """Un gesto o una tecla es una interacción; el saludo automático o un reclamo, no."""
+        if src in ("gesture", "manual"):
+            self.attract.interaction(time.monotonic())
+
+    def _run_attract(self):
+        """Modo reclamo: alterna las acciones de [attract] actions que el modelo pueda hacer."""
+        actions = [a for a in self.cfg["attract"]["actions"]
+                   if a == "saludo" or (a == "caminar" and self.clip["caminar"] and isinstance(self.model, Actor))]
+        if not actions:
+            return
+        action = actions[self._attract_turn % len(actions)]
+        self._attract_turn += 1
+        started = self.greet("attract") if action == "saludo" else self.walk("attract")
+        if started and self.msgs["attract"]:
+            self._say(self.msgs["attract"])
 
     def _run_gesture(self, key):
         action = self.gesture_actions.get(key)
@@ -247,7 +271,7 @@ class MascotaApp(ShowBase):
                 self._flash("La cámara aún se está cerrando. Espera unos segundos antes de volver a activar el modo automático.")
                 return
             self.detector = None
-        self.logic.clear(); self.glogic.reset()
+        self.logic.clear(); self.glogic.reset(); self.attract.reset()
         self.detector = PresenceDetector(self.cfg)
         self.detector.preview_enabled = self.debug
         self._detector_started_at = time.monotonic()
@@ -337,6 +361,10 @@ class MascotaApp(ShowBase):
                     self.warning = (f"Gestos desactivados: {d.gesture_error}. "
                                     "La detección de personas y el modo manual siguen activos.")
                     self.err_text.setText(self.warning)
+                # Prioridad mínima: nada en curso, ni una mano a la vista (ver AttractLogic)
+                if self.attract.update(d.present or d.hand_present, d.hand_present,
+                                       self.arbiter.busy(now), now):
+                    self._run_attract()
         if now - self._last_ui > 0.1:
             self._last_ui = now
             self._refresh_ui()
