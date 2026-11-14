@@ -78,7 +78,8 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 - [ ] Completar la guía de solución de problemas con lo que ocurra en pruebas reales en el stand.
 - [x] Modo reclamo: la mascota alterna saludo y paseo con «¡Ven a saludarme!» tras 15 s sin nadie o tras 45 s sin interacción aunque pase gente; prioridad mínima (`[attract]`).
 - [ ] Ajustar en el stand los tiempos del modo reclamo según el paso de gente.
-- [ ] Contador anónimo del stand (solo números de saludos y gestos por hora, sin imágenes ni personas).
+- [x] Contador anónimo del stand: CSV local por horas con saludos, gestos, reclamos y teclas; solo números (`[stats]`, `estadisticas/` fuera de Git).
+- [ ] Tras la feria, revisar el CSV para ajustar los tiempos del modo reclamo y las horas de más actividad.
 - [ ] Opcional: `run-stand.bat` que reabra la app si se cierra; fondo con la marca del club y QR.
 
 ## Criterios para considerar lista una versión de feria

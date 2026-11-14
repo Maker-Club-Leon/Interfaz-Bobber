@@ -27,3 +27,5 @@ desktop.ini
 .env
 .env.*
 !.env.example
+# Estadísticas locales del stand (las genera la app)
+estadisticas/

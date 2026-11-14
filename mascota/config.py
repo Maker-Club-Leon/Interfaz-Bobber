@@ -22,6 +22,7 @@ DEFAULTS = {
                     "pulgar_arriba": "ninguna", "pulgar_abajo": "ninguna", "victoria": "ninguna",
                     "te_quiero": "ninguna"},
     },
+    "stats": {"enabled": True, "path": "estadisticas/bobber.csv", "save_every_seconds": 60.0},
     "attract": {"empty_seconds": 15.0, "idle_seconds": 45.0, "actions": ["saludo", "caminar"]},
     "window": {"fullscreen": True, "font": "", "hide_controls": True, "keep_awake": True},
     "render": {"ambient": 0.9, "directional": 0.4},

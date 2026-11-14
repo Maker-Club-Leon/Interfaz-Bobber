@@ -300,6 +300,86 @@ class AttractLogicTests(unittest.TestCase):
         self.assertFalse(any(nada.update(False, False, False, t) for t in range(0, 1000, 10)))
 
 
+class StandStatsTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        from datetime import datetime
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "estadisticas" / "bobber.csv"
+        self.now = datetime(2026, 11, 20, 10, 15)
+        self.clock = lambda: self.now
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def stats(self):
+        from mascota.stats import StandStats
+        return StandStats(self.path, save_every_s=60.0, clock=self.clock)
+
+    def read(self):
+        import csv
+        with open(self.path, newline="", encoding="utf-8-sig") as f:
+            return list(csv.DictReader(f, delimiter=";"))
+
+    def test_columnas_por_origen(self):
+        from mascota.stats import column_for
+        self.assertEqual(column_for("saludo", "presence"), "saludos_por_presencia")
+        self.assertEqual(column_for("saludo", "gesture"), "gestos_saludo")
+        self.assertEqual(column_for("caminar", "gesture"), "gestos_caminar")
+        self.assertEqual(column_for("caminar", "attract", "empty"), "reclamos_sin_nadie")
+        self.assertEqual(column_for("saludo", "attract", "idle"), "reclamos_sin_interaccion")
+        self.assertEqual(column_for("caminar", "manual"), "teclas")
+
+    def test_cuenta_por_hora_y_guarda_csv(self):
+        from datetime import datetime
+        s = self.stats()
+        s.record("saludos_por_presencia"); s.record("saludos_por_presencia"); s.record("gestos_saludo")
+        self.now = datetime(2026, 11, 20, 11, 5)
+        s.record("reclamos_sin_nadie")
+        s.save()
+        rows = self.read()
+        self.assertEqual([(r["fecha"], r["hora"]) for r in rows],
+                         [("2026-11-20", "10:00"), ("2026-11-20", "11:00")])
+        self.assertEqual(rows[0]["saludos_por_presencia"], "2")
+        self.assertEqual(rows[0]["gestos_saludo"], "1")
+        self.assertEqual(rows[1]["reclamos_sin_nadie"], "1")
+        self.assertEqual(rows[1]["saludos_por_presencia"], "0")
+
+    def test_reiniciar_la_app_sigue_sumando(self):
+        s = self.stats(); s.record("teclas"); s.save()
+        s2 = self.stats(); s2.record("teclas"); s2.save()
+        self.assertEqual(self.read()[0]["teclas"], "2")
+
+    def test_guarda_como_mucho_cada_intervalo(self):
+        s = self.stats()
+        s.maybe_save(0.0)
+        s.record("gestos_caminar")
+        s.maybe_save(30.0)
+        self.assertFalse(self.path.exists())
+        s.maybe_save(60.0)
+        self.assertTrue(self.path.exists())
+
+    def test_fallo_al_guardar_no_se_repite_en_cada_fotograma(self):
+        s = self.stats()
+        s.maybe_save(0.0)
+        s.record("teclas")
+        s.save = lambda: (_ for _ in ()).throw(PermissionError("abierto en Excel"))
+        with self.assertRaises(PermissionError):
+            s.maybe_save(60.0)
+        s.maybe_save(60.1)                       # no lo vuelve a intentar hasta el siguiente intervalo
+        self.assertTrue(s.dirty)
+
+    def test_columna_desconocida_se_ignora(self):
+        s = self.stats(); s.record(None); s.record("otra")
+        self.assertFalse(s.dirty)
+
+    def test_solo_contiene_numeros(self):
+        """Privacidad: el CSV solo tiene fecha, hora y recuentos."""
+        s = self.stats(); s.record("saludos_por_presencia"); s.save()
+        row = self.read()[0]
+        self.assertTrue(all(v.isdigit() for k, v in row.items() if k not in ("fecha", "hora")))
+
+
 class ConfigTests(unittest.TestCase):
     def test_mensajes_usados_por_la_app_tienen_valor_por_defecto(self):
         """Un mensaje sin valor por defecto lanza KeyError y cierra la app (pasó con 'walk')."""

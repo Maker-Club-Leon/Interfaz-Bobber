@@ -154,10 +154,25 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Modo reclamo | `[attract] empty_seconds`, `idle_seconds`, `actions`; `[messages] attract` | `15` s sin nadie, `45` s sin interacción, saludo y caminar, `¡Ven a saludarme!` (`0` = desactivado) |
 | Modo stand (ocultar controles) | `[window] hide_controls` | `true`: en pantalla completa sin botones, cursor ni estado |
 | Evitar suspensión | `[window] keep_awake` | `true`: mientras la app está abierta, Windows no se suspende ni apaga la pantalla |
+| Estadísticas del stand | `[stats] enabled`, `path`, `save_every_seconds` | `true`, `estadisticas/bobber.csv`, `60` s |
 
 `heading_degrees` gira el modelo sobre su eje vertical. Con `mascota.gltf`, `180` lo deja mirando al público; `0` lo muestra de espaldas y `90`/`-90` de perfil. Si cambias de modelo, prueba esos valores.
 
 Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
+
+## Estadísticas del stand
+
+La app cuenta, por cada hora, cuántas acciones hubo, para saber cuándo funcionó mejor el stand. **Son solo números:** no guarda imágenes, ni momentos exactos, ni nada que identifique a nadie. Se guardan en `estadisticas/bobber.csv`, en el propio portátil: cada minuto y al cerrar la app. Si la app se reinicia, sigue sumando. La carpeta está en `.gitignore` y no se sube a GitHub.
+
+| Columna | Qué cuenta |
+| --- | --- |
+| `fecha`, `hora` | Día y hora (una fila por hora, p. ej. `10:00` = de 10:00 a 10:59) |
+| `saludos_por_presencia` | Saludos automáticos al detectar a alguien (aprox. visitantes que se pararon) |
+| `gestos_saludo`, `gestos_caminar` | Acciones lanzadas por los visitantes con palma o puño |
+| `reclamos_sin_nadie`, `reclamos_sin_interaccion` | Veces que actuó el modo reclamo, en cada uno de sus dos casos |
+| `teclas` | Acciones lanzadas por el personal con el teclado o los botones |
+
+El CSV usa `;` como separador y se abre directamente en Excel. Mejor ábrelo con la app cerrada: si está abierto en Excel, Windows bloquea el archivo y la app avisa de que no ha podido guardar. Lo reintenta cada minuto sin perder los datos. Para empezar de cero, por ejemplo antes de otra feria, borra el archivo. Con `[stats] enabled = false` no se cuenta nada.
 
 ## Procedimiento en el stand
 
@@ -239,6 +254,7 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 │   ├── modelio.py      # inspección y carga glTF/GLB
 │   ├── config.py       # valores por defecto y rutas
 │   ├── selftest.py     # diagnóstico con y sin hardware
+│   ├── stats.py        # contador anónimo del stand (CSV por horas)
 │   └── __main__.py     # comandos de ejecución
 ├── tests/
 │   └── test_logic.py   # pruebas de lógica sin cámara ni ventana

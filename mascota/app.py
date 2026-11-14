@@ -14,6 +14,7 @@ from .behavior import ActionArbiter, AttractLogic, GestureLogic, GreetingLogic
 from .config import resolve
 from .detector import GESTURE_LABELS, PresenceDetector
 from .modelio import inspect_glb, load_model
+from .stats import StandStats, column_for
 
 FONTS = ["C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"]
 
@@ -35,7 +36,13 @@ class MascotaApp(ShowBase):
         self.arbiter = ActionArbiter()
         a = cfg["attract"]                    # modo reclamo: sin nadie / sin interacción
         self.attract = AttractLogic(a["empty_seconds"], a["idle_seconds"])
-        self._attract_turn = 0
+        self._attract_turn, self._attract_reason = 0, None
+        self.stats, stats_warning = None, ""            # contador anónimo por horas (solo números)
+        if cfg["stats"]["enabled"]:
+            try:
+                self.stats = StandStats(resolve(cfg["stats"]["path"]), cfg["stats"]["save_every_seconds"])
+            except Exception as e:
+                stats_warning = f"Estadísticas desactivadas: no se pudo leer {cfg['stats']['path']} ({e})."
         self.gesture_actions = {k: v for k, v in g["actions"].items() if v not in ("", "ninguna")}
         self._gesture_err_shown = False
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
@@ -47,6 +54,8 @@ class MascotaApp(ShowBase):
 
         self._load_font()
         self._build_scene()
+        if stats_warning:
+            self.warning = (self.warning + " " if self.warning else "") + stats_warning
         self._build_ui()
         self._set_window()
         self._ensure_idle_started()
@@ -199,7 +208,7 @@ class MascotaApp(ShowBase):
         dur = self.model.getDuration(self.clip["saludo"]) if has_clip else 1.0
         if not self.arbiter.request("saludo", src, time.monotonic(), dur):
             return False                      # hay una acción de mayor prioridad en curso
-        self._note_interaction(src)
+        self._on_action("saludo", src)
         self._stop_all()
         self._say(self.msgs["hello"])
         if has_clip:
@@ -224,7 +233,7 @@ class MascotaApp(ShowBase):
         dur = self.cfg["gestures"]["walk_seconds"]
         if not self.arbiter.request("caminar", src, time.monotonic(), dur):
             return False
-        self._note_interaction(src)
+        self._on_action("caminar", src)
         self._stop_all()
         self._say(self.msgs["walk"])
         self.model.loop(self.clip["caminar"])
@@ -234,12 +243,27 @@ class MascotaApp(ShowBase):
     def _after_walk(self):
         self.idle(announce=True)
 
-    def _note_interaction(self, src):
-        """Un gesto o una tecla es una interacción; el saludo automático o un reclamo, no."""
+    def _on_action(self, action, src):
+        """Una acción aceptada: la cuenta en las estadísticas y, si es un gesto o una tecla,
+        la registra como interacción (el saludo automático o un reclamo no lo son)."""
         if src in ("gesture", "manual"):
             self.attract.interaction(time.monotonic())
+        if self.stats:
+            self.stats.record(column_for(action, src, self._attract_reason))
 
-    def _run_attract(self):
+    def _save_stats(self, final=False):
+        if not self.stats:
+            return
+        try:
+            self.stats.save() if final else self.stats.maybe_save(time.monotonic())
+        except OSError as e:                      # p. ej. el CSV abierto en Excel: se reintenta luego
+            msg = (f"No se pudieron guardar las estadísticas en {self.stats.path.name} ({e}). "
+                   "¿Está abierto en Excel? Se reintentará; los datos siguen en memoria.")
+            print("Aviso:", msg)
+            if not final:
+                self._flash(msg)
+
+    def _run_attract(self, reason=None):
         """Modo reclamo: alterna las acciones de [attract] actions que el modelo pueda hacer."""
         actions = [a for a in self.cfg["attract"]["actions"]
                    if a == "saludo" or (a == "caminar" and self.clip["caminar"] and isinstance(self.model, Actor))]
@@ -247,7 +271,11 @@ class MascotaApp(ShowBase):
             return
         action = actions[self._attract_turn % len(actions)]
         self._attract_turn += 1
-        started = self.greet("attract") if action == "saludo" else self.walk("attract")
+        self._attract_reason = reason               # para contar el tipo de reclamo
+        try:
+            started = self.greet("attract") if action == "saludo" else self.walk("attract")
+        finally:
+            self._attract_reason = None
         if started and self.msgs["attract"]:
             self._say(self.msgs["attract"])
 
@@ -362,9 +390,11 @@ class MascotaApp(ShowBase):
                                     "La detección de personas y el modo manual siguen activos.")
                     self.err_text.setText(self.warning)
                 # Prioridad mínima: nada en curso, ni una mano a la vista (ver AttractLogic)
-                if self.attract.update(d.present or d.hand_present, d.hand_present,
-                                       self.arbiter.busy(now), now):
-                    self._run_attract()
+                reason = self.attract.update(d.present or d.hand_present, d.hand_present,
+                                             self.arbiter.busy(now), now)
+                if reason:
+                    self._run_attract(reason)
+        self._save_stats()
         if now - self._last_ui > 0.1:
             self._last_ui = now
             self._refresh_ui()
@@ -501,6 +531,7 @@ class MascotaApp(ShowBase):
             return False
 
     def _cleanup(self):
+        self._save_stats(final=True)
         self._set_keep_awake(False)
         if self.detector:
             self.detector.stop()

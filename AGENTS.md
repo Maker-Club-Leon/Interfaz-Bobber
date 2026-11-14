@@ -14,6 +14,7 @@ Antes de cambiar código, lee `README.md`, `ROADMAP.md`, `config.toml` y los mó
 - `mascota/config.py` y `config.toml`: valores por defecto y ajustes editables del stand. Mantén sus opciones coherentes.
 - `mascota/modelio.py`: lectura y carga de `.gltf`/`.glb` y resolución de clips.
 - `mascota/calibrate.py`: diagnóstico visual de cámara, pose y mano.
+- `mascota/stats.py`: contador anónimo del stand (CSV local por horas). Solo recuentos agregados: no añadas imágenes, momentos exactos por visitante ni nada que identifique a personas.
 - `mascota/selftest.py` y `tests/test_logic.py`: diagnósticos y pruebas.
 
 El modelo activo es `assets/mascota.gltf`; sus clips son `idle`, `jump` y `walk`. La configuración asigna `jump` al saludo de forma provisional. El archivo `assets/mascota.glb` no tiene animaciones. No afirmes que `jump` es un saludo con la pata ni inventes clips del modelo.
