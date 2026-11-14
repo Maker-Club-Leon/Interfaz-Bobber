@@ -47,13 +47,18 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 
 ## Prioridad 1 — validar en las condiciones de la feria
 
+El stand usará uno de los portátiles del club, preparado ese día y con alguien del club presente. No hace falta arranque automático ni instalación en PCs ajenos; lo importante es que ese portátil llegue preparado y que Bobber aguante horas sin intervención.
+
+- [x] Lista de preparación del portátil (día antes y montaje) en el README: actualizar, selftest, energía, notificaciones y Windows Update.
+- [x] Evitar que Windows se suspenda o apague la pantalla mientras Bobber está abierto (`[window] keep_awake`).
+- [x] Reintentar la cámara automáticamente tras un fallo, sin tener que pulsar `M` (`[camera] retry_seconds`).
+- [ ] Preparar el portátil concreto del stand con esa lista y repetir allí el `selftest` con la webcam que se llevará.
+
 - [x] Instalar desde un clon limpio de GitHub con `run.bat --selftest` en el PC de desarrollo (2026-11-13): eligió Python 3.12 aunque `py` usa 3.15 por defecto, instaló `mediapipe 0.10.33` sin conflictos, ni rastro de `.venv` en Git, 31 pruebas y selftest «TODO CORRECTO» en 56 s. Los paquetes salieron de la caché de pip.
 - [x] Fijar la versión exacta de todas las dependencias (23 paquetes) y exigir Python 3.12; el selftest comprueba ambas cosas. Instalación limpia verificada con `run.bat --selftest` (2026-11-13).
-- [ ] Repetirlo en un PC Windows limpio (sin Python ni caché de pip), usando solo el README.
 - [x] Ejecutar `python -m unittest discover -s tests -v` y `run.bat --selftest` en el PC de desarrollo con su webcam (2026-11-13: 26 pruebas y selftest «TODO CORRECTO»; un fotograma 640x480, persona detectada).
 - [x] Abrir `run.bat --calibrar` en el PC de desarrollo: persona, palma y puño se ven bien a simple vista (2026-11-13). Falta medir la distancia de detección en el stand.
 - [x] Revisar conexiones de red: MediaPipe `0.10.35` intentaba enviar telemetría; fijado `0.10.33`, sin conexiones en 17 minutos de prueba (2026-11-13).
-- [ ] Repetir el `selftest` en el PC y con la cámara del stand (actualizando antes `.venv` con `pip install -r requirements.txt`).
 - [ ] Probar la webcam real: permisos, cambio a manual, cierre/reintento, distancia de detección y recuperación tras ausencias.
 - [ ] Calibrar iluminación, encuadre, `min_shoulder_width`, `min_visibility` y `interval_ms` en el stand.
 - [ ] Probar palma y puño varias veces, y comprobar cooldown, retirada de mano y ausencia de solapamiento.
@@ -71,6 +76,9 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
 - [ ] Sustituir la captura cuando esté el Bobber definitivo; opcional: vídeo corto del saludo y del paseo.
 - [ ] Completar la guía de solución de problemas con lo que ocurra en pruebas reales en el stand.
+- [ ] Modo reclamo: si pasa un rato sin nadie, la mascota hace una acción existente para llamar la atención.
+- [ ] Contador anónimo del stand (solo números de saludos y gestos por hora, sin imágenes ni personas).
+- [ ] Opcional: `run-stand.bat` que reabra la app si se cierra; fondo con la marca del club y QR.
 
 ## Criterios para considerar lista una versión de feria
 

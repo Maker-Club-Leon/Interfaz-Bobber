@@ -13,6 +13,7 @@ index = 0                  # 0 = primera cámara; prueba 1, 2... si hay varias
 width = 640
 height = 480
 starting_timeout_seconds = 10.0  # pasar a manual si el driver no responde
+retry_seconds = 30.0       # tras un fallo de cámara, reintentar cada X s (0 = no reintentar)
 
 [detection]
 auto_start = true          # false = arrancar en modo manual
@@ -48,6 +49,7 @@ te_quiero = "ninguna"
 [window]
 fullscreen = true          # ventana sin bordes a pantalla completa (F11 la alterna)
 hide_controls = true       # en pantalla completa oculta botones, cursor y estado al público; C o F11 los muestran
+keep_awake = true          # mientras la app está abierta, Windows no se suspende ni apaga la pantalla
 font = ""                  # opcional: ruta a un .ttf. Vacío = Segoe UI/Arial de Windows
 
 [render]

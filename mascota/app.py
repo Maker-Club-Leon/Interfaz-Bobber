@@ -38,6 +38,7 @@ class MascotaApp(ShowBase):
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
         self._detector_started_at = 0.0
         self._last_error, self._last_error_at = "", 0.0
+        self._retry_at, self._recovering = None, False     # reintento automático de la cámara
         self.kiosk = cfg["window"]["fullscreen"] and not windowed
         self.exitFunc = self._cleanup
 
@@ -51,6 +52,7 @@ class MascotaApp(ShowBase):
                         ("1", self.idle), ("2", self.greet), ("3", self.walk), ("m", self.toggle_mode), ("c", self.toggle_debug)]:
             self.accept(key, self._safe(fn))
         self.taskMgr.add(self._safe_tick, "tick")
+        self._set_keep_awake(cfg["window"]["keep_awake"])
         if cfg["detection"]["auto_start"] and not start_manual:
             self.start_auto()
         else:
@@ -253,7 +255,13 @@ class MascotaApp(ShowBase):
         self.mode = "auto"
         self._say(self.msgs["idle"])
 
-    def to_manual(self, reason=""):
+    def to_manual(self, reason="", retry=False):
+        """Pasa a modo manual. retry=True (fallo de cámara): vuelve a intentarlo cada
+        [camera] retry_seconds. Si lo pide el personal (tecla M), no se reintenta."""
+        secs = self.cfg["camera"]["retry_seconds"]
+        self._retry_at = time.monotonic() + secs if retry and secs > 0 else None
+        if self._retry_at is not None:
+            reason = f"{reason} Reintento automático en {secs:.0f} s (o pulsa M para reintentar ya)."
         detector = self.detector
         if detector:
             detector.stop()
@@ -270,7 +278,7 @@ class MascotaApp(ShowBase):
 
     def toggle_mode(self):
         if self.mode == "auto": self.to_manual("")
-        else: self.err_text.setText(""); self.start_auto()
+        else: self._retry_at = None; self.err_text.setText(self.warning); self.start_auto()
 
     def toggle_debug(self):
         self.debug = not self.debug
@@ -297,14 +305,25 @@ class MascotaApp(ShowBase):
         now = time.monotonic()
         if self.mode == "manual" and self.detector and not self.detector.is_alive():
             self.detector = None
+        if self.mode == "manual" and self._retry_at is not None and now >= self._retry_at:
+            if self.detector is not None:          # la captura anterior aún se está cerrando
+                self._retry_at = now + 1.0
+            else:
+                self._retry_at, self._recovering = None, True
+                self.err_text.setText("Reintentando la cámara…")
+                self.start_auto()
         d = self.detector
         if self.mode == "auto" and d:
             if d.status == "error":
-                self.to_manual(f"Cámara no disponible: {d.error}. Modo manual activo.")
+                self.to_manual(f"Cámara no disponible: {d.error}. Modo manual activo.", retry=True)
             elif (d.status == "starting" and now - self._detector_started_at
                   >= self.cfg["camera"].get("starting_timeout_seconds", 10.0)):
-                self.to_manual("La cámara no responde. Modo manual activo; comprueba el permiso o la conexión.")
+                self.to_manual("La cámara no responde. Modo manual activo; comprueba el permiso o la conexión.",
+                               retry=True)
             elif d.status == "running":
+                if self._recovering:               # la cámara ha vuelto: quitar el aviso
+                    self._recovering = False
+                    self.err_text.setText(self.warning)
                 # Prioridad: gesto > presencia. La presencia nunca interrumpe una acción en curso.
                 ev = self.logic.update(d.present, now)
                 if ev == "greet": self.greet("presence")
@@ -437,7 +456,24 @@ class MascotaApp(ShowBase):
         self.kiosk = not self.kiosk
         self._set_window()
 
+    def _set_keep_awake(self, on):
+        """Pide a Windows que no suspenda el equipo ni apague la pantalla mientras la app esté abierta.
+
+        No cambia la configuración de energía: la petición desaparece al cerrar la app (o si el
+        proceso termina). Devuelve True si Windows aceptó la petición."""
+        if os.name != "nt":
+            return False
+        import ctypes
+        ES_CONTINUOUS, ES_SYSTEM_REQUIRED, ES_DISPLAY_REQUIRED = 0x80000000, 0x1, 0x2
+        flags = ES_CONTINUOUS | (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED if on else 0)
+        try:
+            return ctypes.windll.kernel32.SetThreadExecutionState(flags) != 0
+        except Exception as e:                    # nunca debe impedir que la app funcione
+            print("Aviso: no se pudo pedir a Windows que no se suspenda:", e)
+            return False
+
     def _cleanup(self):
+        self._set_keep_awake(False)
         if self.detector:
             self.detector.stop()
             if self.detector.is_alive():
