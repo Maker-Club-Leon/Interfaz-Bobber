@@ -72,6 +72,8 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 - [ ] Actualizar `[animations]` y la documentación cuando los clips nuevos estén dentro del modelo.
 - [x] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
 - [x] Fijar `heading_degrees` para que la mascota mire al público (`180` con `mascota.gltf`).
+- [x] Pantalla completa y ventana ajustadas a la pantalla donde está la ventana, también en TVs 4K con escalado al 300 % y con varias pantallas (comprobado con TV 3840x2160 + monitor 1920x1080, 2026-11-16).
+- [x] Teclas `F12` (ayuda del personal con las teclas y los controles, sin salir de la pantalla completa) y `H` (mostrar/ocultar la ayuda de gestos).
 - [ ] Revisar el encuadre/orientación en el monitor del stand.
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
 - [ ] Sustituir la captura cuando esté el Bobber definitivo; opcional: vídeo corto del saludo y del paseo.

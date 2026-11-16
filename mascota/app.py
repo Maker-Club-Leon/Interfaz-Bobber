@@ -46,6 +46,7 @@ class MascotaApp(ShowBase):
         self.gesture_actions = {k: v for k, v in g["actions"].items() if v not in ("", "ninguna")}
         self._gesture_err_shown = False
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
+        self.staff_help, self.show_hint = False, True       # F12: ayuda del personal; H: ayuda de gestos
         self._detector_started_at = 0.0
         self._last_error, self._last_error_at = "", 0.0
         self._retry_at, self._recovering = None, False     # reintento automático de la cámara
@@ -61,7 +62,8 @@ class MascotaApp(ShowBase):
         self._ensure_idle_started()
 
         for key, fn in [("escape", self.userExit), ("q", self.userExit), ("f11", self.toggle_window),
-                        ("1", self.idle), ("2", self.greet), ("3", self.walk), ("m", self.toggle_mode), ("c", self.toggle_debug)]:
+                        ("1", self.idle), ("2", self.greet), ("3", self.walk), ("m", self.toggle_mode), ("c", self.toggle_debug),
+                        ("f12", self.toggle_help), ("h", self.toggle_hint)]:
             self.accept(key, self._safe(fn))
         self.taskMgr.add(self._safe_tick, "tick")
         self._set_keep_awake(cfg["window"]["keep_awake"])
@@ -339,9 +341,20 @@ class MascotaApp(ShowBase):
             n.show() if self.debug else n.hide()
         self._apply_controls_visibility()
 
+    def toggle_help(self):
+        """F12: ayuda del personal (teclas, botones, estado y cursor) sin salir de la pantalla completa."""
+        self.staff_help = not self.staff_help
+        self.help_text.show() if self.staff_help else self.help_text.hide()
+        self._apply_controls_visibility()
+
+    def toggle_hint(self):
+        """H: muestra u oculta la ayuda de gestos para el público (solo durante esta sesión)."""
+        self.show_hint = not self.show_hint
+        self._flash("Ayuda de gestos " + ("visible" if self.show_hint else "oculta") + " (H para cambiar)", 3.0)
+
     def _controls_visible(self):
-        """En modo stand (pantalla completa) el público solo ve la mascota; C o F11 muestran los controles."""
-        return not (self.kiosk and self.cfg["window"]["hide_controls"]) or self.debug
+        """En modo stand (pantalla completa) el público solo ve la mascota; C, F11 o F12 muestran los controles."""
+        return not (self.kiosk and self.cfg["window"]["hide_controls"]) or self.debug or self.staff_help
 
     def _apply_controls_visibility(self):
         visible = self._controls_visible()
@@ -428,6 +441,20 @@ class MascotaApp(ShowBase):
         self.hold_fill = self.hold_bar.attachNewNode(cm.generate())
         self.hold_fill.setPos(-0.3, 0, 0); self.hold_fill.setColor(1, 0.85, 0.3, 1)
         self.hold_bar.setTransparency(True); self.hold_bar.hide()
+        # F12: panel con las teclas para el personal
+        self.help_text = self._text(self.a2dLeftCenter, pos=(0.08, 0.45), scale=0.05, fg=(1, 1, 1, 1),
+                                    align=TextNode.ALeft, bg=(0, 0, 0, 0.6))
+        self.help_text.setText(
+            "Teclas del personal\n\n"
+            "1   Reposo\n2   Saludo\n3   Caminar\n"
+            "M   Automático / manual (cámara)\n"
+            "C   Calibración (cámara y datos)\n"
+            "H   Mostrar / ocultar ayuda de gestos\n"
+            "F11   Pantalla completa / ventana\n"
+            "F12   Mostrar / ocultar esta ayuda\n"
+            "Esc o Q   Salir")
+        self.help_text.textNode.setCardAsMargin(0.6, 0.6, 0.5, 0.4)   # margen interior del recuadro
+        self.help_text.hide()
         self.debug_text = self._text(self.a2dTopRight, pos=(-0.05, -0.75), scale=0.04, align=TextNode.ARight, fg=(1, 1, 1, 1))
         cm = CardMaker("preview"); cm.setFrame(-0.4, 0.4, -0.3, 0.3)
         self.preview_card = self.a2dTopRight.attachNewNode(cm.generate())
@@ -436,7 +463,8 @@ class MascotaApp(ShowBase):
         self.debug_text.hide(); self.preview_card.hide()
 
         buttons = [("Reposo (1)", self.idle), ("Saludo (2)", self.greet), ("Caminar (3)", self.walk), ("Auto/Manual (M)", self.toggle_mode),
-                   ("Calibración (C)", self.toggle_debug), ("Pantalla (F11)", self.toggle_window)]
+                   ("Calibración (C)", self.toggle_debug), ("Pantalla (F11)", self.toggle_window),
+                   ("Ayuda (F12)", self.toggle_help)]
         widths = [len(t) * 0.5 + 1.6 for t, _ in buttons]
         gap, sc = 0.7, 0.05
         x = -(sum(widths) + gap * (len(widths) - 1)) * sc / 2
@@ -473,7 +501,7 @@ class MascotaApp(ShowBase):
 
     def _refresh_hint(self, d):
         """Muestra qué gestos hay; mientras se mantiene uno que va a actuar, pide sostenerlo."""
-        gestures_ready = (self.mode == "auto" and d is not None and d.status == "running"
+        gestures_ready = (self.show_hint and self.mode == "auto" and d is not None and d.status == "running"
                           and d.gesture_status == "ready" and bool(self.gesture_actions))
         pending = self.glogic.pending(time.monotonic()) if gestures_ready else None
         if pending and self.msgs["hold"]:
@@ -500,13 +528,46 @@ class MascotaApp(ShowBase):
         self.msg.setText(text)
 
     # ---------- ventana ----------
+    def _monitor_rect(self):
+        """(x, y, ancho, alto) en píxeles reales de la pantalla donde está ahora la ventana.
+
+        Se consulta a Windows en cada cambio (no al arrancar), así funciona con pantallas 4K
+        escaladas, con otra pantalla como principal o si la ventana se ha movido a otra pantalla.
+        Si no se puede consultar, usa la pantalla principal que vio Panda3D al arrancar."""
+        fallback = (0, 0, self.pipe.getDisplayWidth(), self.pipe.getDisplayHeight())
+        if os.name != "nt" or not hasattr(self.win, "getWindowHandle"):
+            return fallback
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT),
+                            ("rcWork", wintypes.RECT), ("dwFlags", wintypes.DWORD)]
+
+            user32 = ctypes.windll.user32
+            user32.MonitorFromWindow.restype = wintypes.HMONITOR
+            user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+            user32.GetMonitorInfoW.argtypes = [wintypes.HMONITOR, ctypes.POINTER(MONITORINFO)]
+            hwnd = self.win.getWindowHandle().getIntHandle()
+            hmon = user32.MonitorFromWindow(hwnd, 2)          # MONITOR_DEFAULTTONEAREST
+            info = MONITORINFO(); info.cbSize = ctypes.sizeof(info)
+            if not hmon or not user32.GetMonitorInfoW(hmon, ctypes.byref(info)):
+                return fallback
+            r = info.rcMonitor
+            return r.left, r.top, r.right - r.left, r.bottom - r.top
+        except Exception as e:
+            print("Aviso: no se pudo consultar la pantalla de la ventana:", e)
+            return fallback
+
     def _set_window(self):
+        x, y, w, h = self._monitor_rect()
         wp = WindowProperties()
-        if self.kiosk:
-            wp.setUndecorated(True); wp.setOrigin(0, 0)
-            wp.setSize(self.pipe.getDisplayWidth(), self.pipe.getDisplayHeight())
-        else:
-            wp.setUndecorated(False); wp.setOrigin(80, 80); wp.setSize(1280, 720)
+        if self.kiosk:                                   # sin bordes y ocupando toda esa pantalla
+            wp.setUndecorated(True); wp.setOrigin(x, y); wp.setSize(w, h)
+        else:                                            # ventana de 2/3 de la pantalla, centrada
+            ww, wh = w * 2 // 3, h * 2 // 3
+            wp.setUndecorated(False); wp.setOrigin(x + (w - ww) // 2, y + (h - wh) // 2); wp.setSize(ww, wh)
         self.win.requestProperties(wp)
         self._apply_controls_visibility()
 

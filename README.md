@@ -42,7 +42,7 @@ flowchart LR
 
 Los controles manuales tienen prioridad sobre los gestos, los gestos sobre el saludo automático por presencia, y este sobre el modo reclamo. La detección de persona y de mano usa la misma cámara y el mismo fotograma.
 
-En modo automático, con los gestos activos, la pantalla explica al visitante qué puede hacer («Saluda con la mano abierta · Cierra el puño para que camine»). Mientras mantiene un gesto que va a actuar, aparece «¡Mantén el gesto!» con una barra que se llena hasta que la mascota responde. Los textos se cambian en `[messages] hint` y `hold`.
+En modo automático, con los gestos activos, la pantalla explica al visitante qué puede hacer («Saluda con la mano abierta · Cierra el puño para que camine»). Mientras mantiene un gesto que va a actuar, aparece «¡Mantén el gesto!» con una barra que se llena hasta que la mascota responde. Los textos se cambian en `[messages] hint` y `hold`. La tecla `H` oculta o muestra esta ayuda durante la sesión; para quitarla siempre, deja `hint = ""`.
 
 **Modo reclamo:** para llamar la atención, la mascota hace una de sus acciones (alterna saludo y paseo) con el mensaje «¡Ven a saludarme!» en dos casos:
 
@@ -125,10 +125,12 @@ El modo de calibración y el `selftest` acceden a la cámara; cierra antes otras
 | `3` / Caminar | Prueba el clip de caminar |
 | `M` / Auto-Manual | Activa o detiene la cámara |
 | `C` / Calibración | Muestra cámara, presencia, puntos de mano y confianza, además de los botones y el estado |
-| `F11` / Pantalla | Alterna pantalla completa y ventana |
+| `F11` / Pantalla | Alterna pantalla completa y ventana (2/3 de la pantalla, centrada). La pantalla completa ocupa la pantalla donde está la ventana en ese momento |
+| `F12` / Ayuda | Muestra u oculta la ayuda del personal (lista de teclas, botones, estado y cursor) sin salir de la pantalla completa |
+| `H` | Muestra u oculta la ayuda de gestos del público, solo durante esa sesión |
 | `Esc` o `Q` | Cierra la aplicación |
 
-**Modo stand:** a pantalla completa, el público solo ve la mascota, el mensaje y la ayuda de gestos. Los botones, el cursor y la línea de estado se ocultan para que nadie los pulse, y el personal maneja la app con el teclado. `C` (calibración) o `F11` (ventana) los vuelven a mostrar. Para verlos siempre, pon `[window] hide_controls = false`.
+**Modo stand:** a pantalla completa, el público solo ve la mascota, el mensaje y la ayuda de gestos. Los botones, el cursor y la línea de estado se ocultan para que nadie los pulse, y el personal maneja la app con el teclado. `F12` los muestra junto con la lista de teclas, sin salir de la pantalla completa; también los muestran `C` (calibración) y `F11` (ventana). Para verlos siempre, pon `[window] hide_controls = false`.
 
 Si la cámara falla, la app cambia a modo manual y muestra el error. Las teclas, y los botones cuando están visibles, siguen disponibles.
 
@@ -195,7 +197,7 @@ El stand usa uno de los portátiles del club, preparado para ese día. Este proc
    - **Tapa:** que cerrarla no suspenda el equipo, o simplemente no la cierres.
    - **Notificaciones:** activa *No molestar* para que no aparezca nada encima de Bobber.
    - **Windows Update:** pausa las actualizaciones una semana (*Configuración > Windows Update*), para que no reinicie el equipo en mitad de la feria.
-5. Si vais a usar un monitor externo, pruébalo: Bobber se abre a pantalla completa en la pantalla principal.
+5. Si vais a usar una TV o un monitor externo, pruébalo. Bobber se abre a pantalla completa en la pantalla principal, y funciona con TVs 4K aunque Windows tenga el escalado al 200-300 %. Para usar otra pantalla sin cambiar la principal: pulsa `F11` (ventana), arrastra la ventana a esa pantalla y vuelve a pulsar `F11`.
 
 Llevad el cargador, la webcam y su cable. No hace falta internet en el stand.
 
@@ -223,6 +225,7 @@ La app no se cierra por un fallo de cámara, de gestos ni por un error interno e
 | `Cámara no disponible:` con un error de red o de MediaPipe | Falta `pose_landmarker_lite.task` y no se pudo descargar, o el modelo de pose no carga | Comprueba que el archivo está en `assets`; si falta, ejecuta `run.bat --descargar-modelos` con internet y reinicia |
 | `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/mascota.gltf` | Restaura el archivo desde el repositorio y revisa `[model] path` |
 | `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`idle`, `jump`, `walk`) |
+| Bobber no ocupa toda la TV o sale en otra pantalla | La ventana está en otra pantalla, o se cambió la pantalla principal con la app abierta | Pulsa `F11` dos veces: la pantalla completa se ajusta a la pantalla donde está la ventana. Para cambiar de pantalla, arrastra la ventana en modo ventana y pulsa `F11` |
 | `Error interno en …: …. Bobber vuelve a reposo…` | Un fallo de código en una tecla, un botón, un gesto o el bucle principal. La app no se cierra | Sigue con el stand; si se repite, anota el mensaje y copia el `[ERROR]` completo que aparece en la consola de `run.bat` para depurarlo |
 | `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.12 de 64 bits («No se encontro Python 3.12») o no hay internet | Instala Python 3.12 desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
 
