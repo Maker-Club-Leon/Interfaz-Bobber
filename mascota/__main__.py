@@ -19,9 +19,23 @@ def main():
     if a.calibrar:
         from .calibrate import main as run
         return run()
+    _set_windows_app_id()
     from .app import MascotaApp
     from .config import load_config
     MascotaApp(load_config(), start_manual=a.manual, windowed=a.ventana).run()
+
+
+def _set_windows_app_id():
+    """Identidad propia en la barra de tareas de Windows: así muestra el icono de Bobber en vez
+    de agruparla con Python. Debe llamarse antes de crear la ventana."""
+    import os
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("MakerClubLeon.Bobber")
+    except Exception:
+        pass                                    # solo afecta al icono de la barra de tareas
 
 
 main()

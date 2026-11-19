@@ -29,3 +29,6 @@ desktop.ini
 !.env.example
 # Estadísticas locales del stand (las genera la app)
 estadisticas/
+
+# Acceso directo personal del escritorio (no se sube)
+crear_acceso_directo.bat

@@ -128,6 +128,8 @@ Si el equipo ya tenía `.venv` con otra versión, `run.bat` no la cambia por sí
 2. Ejecuta `run.bat`. La primera vez crea `.venv` e instala las dependencias.
 3. Permite el acceso a la cámara cuando Windows lo solicite.
 
+La ventana y la barra de tareas muestran el logo del Maker (`assets/bobber.ico`) en lugar del icono de Python.
+
 Comandos alternativos, desde la carpeta del proyecto:
 
 | Comando | Para qué sirve |
@@ -180,6 +182,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Modo reclamo | `[attract] empty_seconds`, `idle_seconds`, `actions`; `[messages] attract` | `15` s sin nadie, `45` s sin interacción, saludo y caminar, `¡Ven a saludarme!` (`0` = desactivado) |
 | Modo stand (ocultar controles) | `[window] hide_controls` | `true`: en pantalla completa sin botones, cursor ni estado |
 | Evitar suspensión | `[window] keep_awake` | `true`: mientras la app está abierta, Windows no se suspende ni apaga la pantalla |
+| Icono de la ventana | `[window] icon` | `assets/bobber.ico` (logo del Maker Club León) |
 | Estadísticas del stand | `[stats] enabled`, `path`, `save_every_seconds` | `true`, `estadisticas/bobber.csv`, `60` s |
 
 `heading_degrees` gira el modelo sobre su eje vertical. Con `bobber.glb`, `-90` lo deja mirando al público, porque en Blender Bobber mira hacia +X. Con el modelo de pruebas `mascota.gltf` es `180`. Si cambias de modelo, prueba `0`, `90`, `180` y `-90`.
@@ -216,6 +219,7 @@ El stand usa uno de los portátiles del club, preparado para ese día. Este proc
    Si el portátil no tenía el proyecto, clónalo y ejecuta `run.bat`; necesita Python 3.12 de 64 bits.
 2. Conecta la webcam que llevaréis al stand y ejecuta `run.bat --selftest`. Debe terminar en `TODO CORRECTO`.
 3. Ejecuta `run.bat` y prueba `2` (saludo), `3` (caminar), palma y puño. Sal con `Esc`.
+   Borra la carpeta `estadisticas/` para que la feria empiece con el contador a cero.
 4. Deja Windows listo para varias horas sin interrupciones:
    - **Energía:** con el cargador enchufado, pantalla y suspensión en «Nunca» (*Configuración > Sistema > Inicio/apagado y batería*). Bobber también pide a Windows que no se suspenda mientras está abierto, pero mejor no depender solo de eso.
    - **Tapa:** que cerrarla no suspenda el equipo, o simplemente no la cierres.
@@ -267,6 +271,7 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 .
 ├── assets/
 │   ├── bobber.glb               # modelo activo (generado, no editar a mano)
+│   ├── bobber.ico, logo-maker.png  # icono de la app y logo (isotipo) del Maker Club León
 │   ├── Saludo.Evento .blend     # modelo de Blender del club con su rig y las animaciones
 │   ├── Expresiones.*.png, Pupilas.png  # texturas de la cara
 │   ├── ReferenciasBobber.png    # hoja de referencia del personaje
@@ -289,7 +294,8 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 ├── tests/
 │   └── test_logic.py   # pruebas de lógica sin cámara ni ventana
 ├── tools/
-│   └── animar_bobber.py  # genera bobber.glb desde el .blend del club (se ejecuta con Blender)
+│   ├── animar_bobber.py  # genera bobber.glb desde el .blend del club (se ejecuta con Blender)
+│   └── hacer_icono.py    # genera logo-maker.png y bobber.ico a partir del logo del club
 ├── config.toml
 ├── requirements.txt
 ├── run.bat

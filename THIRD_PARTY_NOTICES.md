@@ -9,6 +9,7 @@ El código propio de Bobber se publica bajo la [licencia MIT](LICENSE). Este arc
 | `pose_landmarker_lite.task` | Google MediaPipe, modelo BlazePose GHUM 3D (lite) | Apache License 2.0, según su [ficha del modelo](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf) | Comprobado |
 | `gesture_recognizer.task` | Google MediaPipe, Gesture Recognizer. Contiene `hand_landmarker.task` (detector y seguimiento de manos) y `hand_gesture_recognizer.task` (clasificador de gestos) | Apache License 2.0 (ver nota) | Comprobado el detector de manos; el clasificador, por indicios |
 | `Saludo.Evento .blend`, `Expresiones.*.png`, `Pupilas.png`, `Ojos.Atlas.png`, `UVPupila.png`, `ReferenciasBobber.png` | Bobber del club: modelo de Blender, texturas de la cara y hoja de referencia | © Maker Club León, todos los derechos reservados (ver abajo) | Del club |
+| `logo-maker.png`, `bobber.ico` | Isotipo del logo del Maker Club León, recortado con `tools/hacer_icono.py` | © Maker Club León, todos los derechos reservados | Del club |
 | `bobber.glb` | Generado desde `Saludo.Evento .blend` con `tools/animar_bobber.py` (animaciones del club, horneadas) | © Maker Club León, todos los derechos reservados | Del club |
 | `mascota.gltf`, `mascota.glb` | Modelo **de pruebas** anterior, ya no es el activo. Exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Origen por confirmar**: no consta si lo hizo el club o un tercero |
 

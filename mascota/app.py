@@ -563,6 +563,10 @@ class MascotaApp(ShowBase):
     def _set_window(self):
         x, y, w, h = self._monitor_rect()
         wp = WindowProperties()
+        icon = resolve(self.cfg["window"]["icon"]) if self.cfg["window"]["icon"] else None
+        if icon and icon.exists():                       # icono de la ventana y la barra de tareas
+            from panda3d.core import Filename
+            wp.setIconFilename(Filename.fromOsSpecific(str(icon)))
         if self.kiosk:                                   # sin bordes y ocupando toda esa pantalla
             wp.setUndecorated(True); wp.setOrigin(x, y); wp.setSize(w, h)
         else:                                            # ventana de 2/3 de la pantalla, centrada
