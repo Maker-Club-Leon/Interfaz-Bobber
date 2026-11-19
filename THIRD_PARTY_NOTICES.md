@@ -8,13 +8,15 @@ El código propio de Bobber se publica bajo la [licencia MIT](LICENSE). Este arc
 | --- | --- | --- | --- |
 | `pose_landmarker_lite.task` | Google MediaPipe, modelo BlazePose GHUM 3D (lite) | Apache License 2.0, según su [ficha del modelo](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf) | Comprobado |
 | `gesture_recognizer.task` | Google MediaPipe, Gesture Recognizer. Contiene `hand_landmarker.task` (detector y seguimiento de manos) y `hand_gesture_recognizer.task` (clasificador de gestos) | Apache License 2.0 (ver nota) | Comprobado el detector de manos; el clasificador, por indicios |
-| `mascota.gltf`, `mascota.glb` | Modelo **de pruebas**, provisional hasta tener el Bobber definitivo con sus animaciones. Exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Origen por confirmar**: no consta si lo hizo el club o un tercero |
+| `Saludo.Evento .blend`, `Expresiones.*.png`, `Pupilas.png`, `Ojos.Atlas.png`, `UVPupila.png`, `ReferenciasBobber.png` | Bobber del club: modelo de Blender, texturas de la cara y hoja de referencia | © Maker Club León, todos los derechos reservados (ver abajo) | Del club |
+| `bobber.glb` | Generado desde `Saludo.Evento .blend` con `tools/animar_bobber.py` (animaciones del club, horneadas) | © Maker Club León, todos los derechos reservados | Del club |
+| `mascota.gltf`, `mascota.glb` | Modelo **de pruebas** anterior, ya no es el activo. Exportado con Khronos glTF Blender I/O v1.8.19 | El archivo no declara autor ni licencia | **Origen por confirmar**: no consta si lo hizo el club o un tercero |
 
 ### Modelo de Bobber
 
 El personaje Bobber y sus modelos 3D son de Maker Club León: © 2026 Maker Club León, todos los derechos reservados. La licencia MIT del código no los cubre. Se incluyen en el repositorio para que la aplicación funcione, pero no se concede permiso para reutilizarlos fuera de este proyecto sin autorización del club.
 
-Mientras no se confirme el origen del modelo de pruebas actual, esta sección se aplica solo al Bobber definitivo.
+Se aplica al Bobber definitivo (sus archivos `.blend`, sus texturas y `bobber.glb`). Mientras no se confirme el origen del modelo de pruebas (`mascota.gltf`/`.glb`), no se aplica a él.
 
 Los modelos de MediaPipe proceden de `storage.googleapis.com/mediapipe-models/` (ver `mascota/detector.py`). Si no se redistribuyen, `run.bat --descargar-modelos` los descarga de esa misma fuente.
 

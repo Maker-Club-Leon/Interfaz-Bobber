@@ -5,10 +5,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULTS = {
-    "model": {"path": "assets/mascota.gltf", "heading_degrees": 180},
+    "model": {"path": "assets/bobber.glb", "heading_degrees": -90},
     "animations": {"reposo": ["reposo", "idle"],
-                    "saludo": ["saludo", "jump", "waving"],
-                    "caminar": ["walk", "walking"]},
+                    "saludo": ["saludo", "saludar", "jump", "waving"],
+                    "caminar": ["caminar", "walk", "walking"]},
     "camera": {"index": 0, "width": 640, "height": 480, "starting_timeout_seconds": 10.0,
                "retry_seconds": 30.0},
     "detection": {"auto_start": True, "interval_ms": 150, "min_visibility": 0.5,

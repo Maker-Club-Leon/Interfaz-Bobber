@@ -17,7 +17,9 @@ Antes de cambiar código, lee `README.md`, `ROADMAP.md`, `config.toml` y los mó
 - `mascota/stats.py`: contador anónimo del stand (CSV local por horas). Solo recuentos agregados: no añadas imágenes, momentos exactos por visitante ni nada que identifique a personas.
 - `mascota/selftest.py` y `tests/test_logic.py`: diagnósticos y pruebas.
 
-El modelo activo es `assets/mascota.gltf`; sus clips son `idle`, `jump` y `walk`. La configuración asigna `jump` al saludo de forma provisional. El archivo `assets/mascota.glb` no tiene animaciones. No afirmes que `jump` es un saludo con la pata ni inventes clips del modelo.
+El modelo activo es `assets/bobber.glb` (Bobber del club), con los clips `reposo`, `saludar` y `caminar`. Es un archivo **generado**: lo produce `tools/animar_bobber.py` (se ejecuta con Blender) a partir de `assets/Saludo.Evento .blend`, que tiene las animaciones hechas por el club en Blender (fotogramas 1-44 saludar, 44-116 caminar, 116-138 reposo), y de las texturas de la cara en `assets/`. El script hornea esas animaciones; no las inventa. Para cambiarlas, se cambian en Blender y se regenera con el comando del README; no edites el `.glb` a mano ni modifiques el `.blend` desde el script. `assets/mascota.gltf` (`idle`/`jump`/`walk`) y `assets/mascota.glb` son el modelo de pruebas anterior, conservado como alternativa.
+
+- `tools/animar_bobber.py`: genera `bobber.glb`. Con `tramos=` hornea por tramos la animación del rig Rigify sobre el esqueleto de deformación (sin `tramos`, crea animaciones sencillas por código), aplana los materiales «toon» a colores sRGB y reduce las mallas grandes al 10 % (la app anima en CPU). Si cambias el modelo, revisa con `run.bat --selftest`, una prueba de rendimiento animando y renders de las animaciones.
 
 ## Reglas de producto y privacidad
 

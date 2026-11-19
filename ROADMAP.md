@@ -7,7 +7,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 ### Hecho
 
 - Ventana de escritorio Panda3D con controles manuales, ventana/pantalla completa y mensajes de estado.
-- Carga de glTF/GLB y reproducción de clips; el archivo activo `mascota.gltf` contiene `idle`, `jump` y `walk`.
+- Carga de glTF/GLB y reproducción de clips; el modelo activo `bobber.glb` (Bobber del club) contiene `reposo`, `saludar` y `caminar`, animados por el club en Blender (`Saludo.Evento .blend`) y exportados con `tools/animar_bobber.py`.
 - Captura local OpenCV con MediaPipe Pose para estimar presencia por nariz y hombros.
 - MediaPipe Gesture Recognizer conectado al mismo flujo de cámara: palma abierta → saludo; puño cerrado → caminar.
 - Confirmación, cooldown y liberación de gesto para reducir activaciones accidentales.
@@ -23,13 +23,13 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 
 ### Limitaciones conocidas
 
-- `jump` es un salto que se usa como saludo provisional. Falta crear/exportar una animación real `saludo` (por ejemplo, levantar y mover la pata).
+- En `caminar` los pies apenas se despegan del suelo (así está animado en Blender). El reposo dura 1,9 s y se reproduce de ida y vuelta; al empezar a saludar desde el reposo hay un pequeño cambio de postura (unos 24°).
+- El modelo exportado tiene el 10 % de polígonos del original y colores planos en lugar del sombreado «toon» de Blender. Las expresiones de la cara (atlas de ojos y boca), que en Blender cambian con drivers, quedan fijas en la expresión del primer fotograma.
 - La aplicación está ajustada para una cámara y una mano. Los tiempos de análisis y umbrales deben calibrarse en el stand real, con su iluminación y distancia.
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
 - El código tiene licencia MIT y `THIRD_PARTY_NOTICES.md` recoge las licencias de terceros, pero falta confirmar el origen del modelo de pruebas actual. La licencia del clasificador de gestos de MediaPipe se deduce por indicios, sin declaración expresa de Google.
 - MediaPipe está fijado en `0.10.33` porque `0.10.35` envía telemetría de uso a Google sin opción para desactivarla. Antes de actualizarlo hay que comprobar que la nueva versión no la incluye. Google no la eliminará ([#6291](https://github.com/google-ai-edge/mediapipe/issues/6291)), así que a la larga habrá que compilar MediaPipe o bloquear `play.googleapis.com`.
-- `mascota.gltf` es un modelo de pruebas; el Bobber definitivo, con sus animaciones, está pendiente.
 - La orientación (`heading_degrees = 180`) se comprobó con un render fuera de pantalla del modelo; falta verla en el monitor del stand.
 
 ## Prioridad 0 — dejar el repositorio listo para GitHub
@@ -37,7 +37,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 - [x] Revisar `git status` y confirmar el estado de la rama/remoto antes de alterar el índice.
 - [x] Quitar del índice `.venv` y bytecode sin borrar las copias locales (el historial actual ya no los contiene).
 - [x] Confirmar que `.gitignore` cubre `.venv/`, `__pycache__/`, `*.py[cod]`, cachés, builds y `.env`.
-- [ ] Decidir si se publican ambos modelos. `mascota.gltf` es el activo; `mascota.glb` es una alternativa sin animaciones.
+- [ ] Decidir si se conserva en el repositorio el modelo de pruebas (`mascota.gltf`/`mascota.glb`), ahora que el activo es `bobber.glb`.
 - [x] Documentar licencias y atribuciones de dependencias y modelos en `THIRD_PARTY_NOTICES.md` (`pose_landmarker_lite.task`: Apache 2.0).
 - [x] Revisar la licencia de `gesture_recognizer.task`: el detector de manos es Apache 2.0 según su ficha; el clasificador, por indicios del repositorio oficial de MediaPipe (ver `THIRD_PARTY_NOTICES.md`).
 - [ ] Antes de una publicación abierta o comercial, pedir confirmación a Google sobre el clasificador de gestos o dejar de incluir el `.task` en el repositorio.
@@ -68,15 +68,16 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 
 ## Prioridad 2 — mejorar la interacción
 
-- [ ] Crear y exportar clips reales `saludo` y `reposo` en Blender; mantener `walk` para el gesto de puño.
-- [ ] Actualizar `[animations]` y la documentación cuando los clips nuevos estén dentro del modelo.
+- [x] Bobber definitivo con las animaciones del club (`Saludo.Evento .blend`: saludar 1-44, caminar 44-116, reposo 116-138), horneadas y exportadas con `tools/animar_bobber.py`; `[animations]` y documentación actualizados (2026-11-19).
+- [ ] Opcional: expresiones de la cara animadas (ojos y boca del atlas) y un caminar con pasos más marcados.
 - [x] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
-- [x] Fijar `heading_degrees` para que la mascota mire al público (`180` con `mascota.gltf`).
+- [x] Fijar `heading_degrees` para que la mascota mire al público (`-90` con `bobber.glb`; era `180` con el modelo de pruebas).
 - [x] Pantalla completa y ventana ajustadas a la pantalla donde está la ventana, también en TVs 4K con escalado al 300 % y con varias pantallas (comprobado con TV 3840x2160 + monitor 1920x1080, 2026-11-16).
 - [x] Teclas `F12` (ayuda del personal con las teclas y los controles, sin salir de la pantalla completa) y `H` (mostrar/ocultar la ayuda de gestos).
 - [ ] Revisar el encuadre/orientación en el monitor del stand.
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
-- [ ] Sustituir la captura cuando esté el Bobber definitivo; opcional: vídeo corto del saludo y del paseo.
+- [x] Captura del README con el Bobber definitivo.
+- [ ] Opcional: vídeo corto del saludo y del paseo.
 - [ ] Completar la guía de solución de problemas con lo que ocurra en pruebas reales en el stand.
 - [x] Modo reclamo: la mascota alterna saludo y paseo con «¡Ven a saludarme!» tras 15 s sin nadie o tras 45 s sin interacción aunque pase gente; prioridad mínima (`[attract]`).
 - [ ] Ajustar en el stand los tiempos del modo reclamo según el paso de gente.

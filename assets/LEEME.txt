@@ -1,7 +1,19 @@
-El modelo activo se configura en config.toml. Por defecto es assets/mascota.gltf,
-que incluye los clips idle, jump y walk y una textura embebida.
+El modelo activo se configura en config.toml. Por defecto es assets/bobber.glb,
+el Bobber del club con las animaciones reposo, saludar y caminar.
 
-assets/mascota.glb es una alternativa del modelo, pero no incluye animaciones.
-Si cambias config.toml para usar ese archivo, la mascota se verá, pero no tendrá
-clips reales para reposo o saludo. Exporta de nuevo desde Blender con las acciones
-incluidas para disponer de esas animaciones.
+bobber.glb NO se edita a mano: se genera desde "Saludo.Evento .blend" (el modelo
+de Blender del club, con su rig y las animaciones: 1-44 saludar, 44-116 caminar,
+116-138 reposo) con el script tools/animar_bobber.py. Las instrucciones están
+en el README, sección "Modelo y animaciones". Para regenerarlo, las texturas de la
+cara (Expresiones.Base.png, Expresiones.Boca.png, Expresiones.Puesto.png y
+Pupilas.png) deben estar en esta carpeta, junto al .blend.
+
+Ojos.Atlas.png y UVPupila.png son guías de trabajo de las texturas y
+ReferenciasBobber.png es la hoja de referencia del personaje; la app no las usa.
+
+mascota.gltf (clips idle, jump y walk) y mascota.glb (sin animaciones) son el
+modelo de pruebas anterior. Para usarlo, cambia [model] path en config.toml y pon
+heading_degrees = 180.
+
+gesture_recognizer.task y pose_landmarker_lite.task son los modelos de MediaPipe
+para detectar gestos y personas (ver THIRD_PARTY_NOTICES.md).

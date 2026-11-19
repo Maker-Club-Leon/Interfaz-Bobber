@@ -411,6 +411,14 @@ class ClipAndModelTests(unittest.TestCase):
         self.assertEqual(cfg["animations"]["reposo"], ["reposo", "idle"])
         self.assertTrue(resolve(cfg["model"]["path"]).is_file())
 
+    def test_modelo_activo_bobber_tiene_las_tres_animaciones(self):
+        cfg = load_config()
+        info = inspect_glb(resolve(cfg["model"]["path"]))
+        self.assertEqual(sorted(info["animations"]), ["caminar", "reposo", "saludar"])
+        self.assertTrue(info["joints"] > 0)
+        resolved = resolve_clips(info["animations"], cfg["animations"])
+        self.assertEqual(resolved, {"reposo": "reposo", "saludo": "saludar", "caminar": "caminar"})
+
     def test_glb_y_gltf_del_proyecto_se_inspeccionan(self):
         gltf = inspect_glb(ROOT / "assets" / "mascota.gltf")
         glb = inspect_glb(ROOT / "assets" / "mascota.glb")

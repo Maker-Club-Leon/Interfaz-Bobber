@@ -15,7 +15,7 @@ El procesamiento de cámara se hace en el propio ordenador. La aplicación no id
 
 ![Bobber en modo stand: la mascota en reposo, el mensaje «Acércate para saludar» y la ayuda de gestos](docs/captura-stand.png)
 
-*Modo stand a pantalla completa, esperando visitantes. El personaje es el modelo de pruebas provisional.*
+*Modo stand a pantalla completa, esperando visitantes.*
 
 ## Qué hace
 
@@ -53,15 +53,39 @@ Nunca actúa con otra acción en curso ni con una mano a la vista, para no estor
 
 ## Modelo y animaciones
 
-El modelo activo es `assets/mascota.gltf`. Es un **modelo de pruebas** que se usará hasta tener el Bobber definitivo con sus animaciones. El archivo incluye sus datos y una textura, y contiene estos clips:
+El modelo activo es `assets/bobber.glb`, el Bobber del club. Sus animaciones las hizo el club en Blender, en el archivo `assets/Saludo.Evento .blend`, como una sola línea de tiempo (fotogramas 1-138 a 24 fps) que se reparte así:
 
-| Clip del modelo | Uso en la aplicación |
-| --- | --- |
-| `idle` | Reposo |
-| `jump` | Saludo provisional |
-| `walk` | Caminar |
+| Clip del modelo | Fotogramas en Blender | Uso en la aplicación |
+| --- | --- | --- |
+| `saludar` | 1-44 | Saludo: levanta la mano y la agita (1,8 s) |
+| `caminar` | 44-116 | Paseo en el sitio, con balanceo del cuerpo (bucle de 3 s) |
+| `reposo` | 116-138 | Reposo: se lleva las manos a la barriga y vuelve. Se reproduce de ida y vuelta para que el bucle no dé saltos (1,9 s) |
 
-`jump` es un salto, no un saludo con la pata. Para que Bobber salude de verdad, crea una acción `saludo` en Blender y cambia `[animations].saludo` en `config.toml`. `assets/mascota.glb` se conserva como alternativa, pero no incluye animaciones.
+**No se edita a mano:** `bobber.glb` se genera desde ese `.blend` con el script [`tools/animar_bobber.py`](tools/animar_bobber.py). El script no cambia las animaciones: solo las prepara para la app.
+
+### Regenerar `bobber.glb`
+
+Si el club cambia el modelo o las animaciones en Blender, necesitas [Blender](https://www.blender.org/download/) (probado con la 5.3). Ejecuta desde la carpeta del proyecto (en una sola línea):
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender 5.3\blender.exe" -b --disable-autoexec "assets\Saludo.Evento .blend" --python tools\animar_bobber.py -- assets\bobber.glb "tramos=saludar:1-44,caminar:44-116,reposo:116-138:idavuelta" en_el_sitio=0
+```
+
+Si cambian los fotogramas de cada animación, ajusta `tramos`. El formato es `nombre:inicio-fin`, y `:idavuelta` reproduce el tramo hacia delante y hacia atrás.
+
+El script no modifica el `.blend`. Hace esto:
+1. Lee («hornea») el movimiento del rig de control Rigify sobre el esqueleto que deforma el modelo (`Bobber.Esqueleto`, 54 huesos), y separa cada tramo en su propia animación.
+2. Indica cuánto cambia la pose entre el final y el principio de cada tramo y entre tramos, para detectar saltos en los bucles y en las transiciones.
+3. Convierte los materiales «toon» de Blender en colores planos, porque glTF no admite ese sombreado.
+4. Reduce las mallas grandes al 10 % de polígonos: la app anima el modelo en la CPU, y con el modelo completo iría a unos 9 fps; reducido va a cientos. Para exportar sin reducir, añade `decimate=1`.
+
+Limitación: en Blender los ojos y la boca cambian de expresión con *drivers*, y eso no se puede exportar a la app. La cara queda fija con la expresión del primer fotograma del primer tramo.
+
+Las texturas de la cara deben estar en `assets/` junto al `.blend`: `Expresiones.Base.png`, `Expresiones.Boca.png`, `Expresiones.Puesto.png` y `Pupilas.png`. Si falta alguna, el script avisa y exporta sin esa parte de la cara. Después de regenerar, comprueba con `run.bat --selftest` que aparecen las tres animaciones.
+
+Sin `tramos`, el script crea en su lugar unas animaciones sencillas por código, útiles con un `.blend` que no traiga animaciones (por ejemplo `Marco.blend`).
+
+`assets/mascota.gltf` (clips `idle`, `jump` y `walk`) y `assets/mascota.glb` son el **modelo de pruebas** anterior. Se conservan como alternativa: para usarlos, cambia `[model] path` y pon `heading_degrees = 180`.
 
 Los gestos vienen configurados así:
 
@@ -140,8 +164,8 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 
 | Ajuste | Sección y clave | Valor inicial |
 | --- | --- | --- |
-| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/mascota.gltf`, `180` (de frente) |
-| Clips del personaje | `[animations] reposo`, `saludo`, `caminar` | `idle`, `jump`, `walk` mediante alias |
+| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/bobber.glb`, `-90` (de frente) |
+| Clips del personaje | `[animations] reposo`, `saludo`, `caminar` | `reposo`, `saludar`, `caminar` mediante alias (también reconoce los del modelo de pruebas) |
 | Cámara | `[camera] index`, `width`, `height` | `0`, `640`, `480` |
 | Reintento tras fallo de cámara | `[camera] retry_seconds` | `30` s (`0` = no reintentar) |
 | Detección de persona | `[detection] min_visibility`, `min_shoulder_width` | `0.5`, `0.10` |
@@ -158,7 +182,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Evitar suspensión | `[window] keep_awake` | `true`: mientras la app está abierta, Windows no se suspende ni apaga la pantalla |
 | Estadísticas del stand | `[stats] enabled`, `path`, `save_every_seconds` | `true`, `estadisticas/bobber.csv`, `60` s |
 
-`heading_degrees` gira el modelo sobre su eje vertical. Con `mascota.gltf`, `180` lo deja mirando al público; `0` lo muestra de espaldas y `90`/`-90` de perfil. Si cambias de modelo, prueba esos valores.
+`heading_degrees` gira el modelo sobre su eje vertical. Con `bobber.glb`, `-90` lo deja mirando al público, porque en Blender Bobber mira hacia +X. Con el modelo de pruebas `mascota.gltf` es `180`. Si cambias de modelo, prueba `0`, `90`, `180` y `-90`.
 
 Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
 
@@ -223,8 +247,8 @@ La app no se cierra por un fallo de cámara, de gestos ni por un error interno e
 | `La cámara aún se está cerrando…` | Se pulsó `M` antes de que se liberara la cámara | Espera unos segundos y vuelve a pulsar `M` |
 | `Gestos desactivados: …` | Falta `gesture_recognizer.task` o falló el reconocedor | La presencia y el modo manual siguen activos. Cierra la app, ejecuta `run.bat --descargar-modelos` (requiere internet) y vuelve a abrirla |
 | `Cámara no disponible:` con un error de red o de MediaPipe | Falta `pose_landmarker_lite.task` y no se pudo descargar, o el modelo de pose no carga | Comprueba que el archivo está en `assets`; si falta, ejecuta `run.bat --descargar-modelos` con internet y reinicia |
-| `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/mascota.gltf` | Restaura el archivo desde el repositorio y revisa `[model] path` |
-| `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`idle`, `jump`, `walk`) |
+| `No encuentro el modelo…` o `No se pudo cargar el modelo…` | Falta o está dañado `assets/bobber.glb` | Restaura el archivo desde el repositorio (o regenéralo, ver «Modelo y animaciones») y revisa `[model] path` |
+| `Faltan animaciones…` | El modelo no tiene los clips configurados | Se usa un movimiento provisional. Revisa `[animations]` en `config.toml` frente a los clips del modelo (`reposo`, `saludar`, `caminar`) |
 | Bobber no ocupa toda la TV o sale en otra pantalla | La ventana está en otra pantalla, o se cambió la pantalla principal con la app abierta | Pulsa `F11` dos veces: la pantalla completa se ajusta a la pantalla donde está la ventana. Para cambiar de pantalla, arrastra la ventana en modo ventana y pulsa `F11` |
 | `Error interno en …: …. Bobber vuelve a reposo…` | Un fallo de código en una tecla, un botón, un gesto o el bucle principal. La app no se cierra | Sigue con el stand; si se repite, anota el mensaje y copia el `[ERROR]` completo que aparece en la consola de `run.bat` para depurarlo |
 | `run.bat` no puede crear el entorno o instalar dependencias | Falta Python 3.12 de 64 bits («No se encontro Python 3.12») o no hay internet | Instala Python 3.12 desde python.org, borra la carpeta `.venv` incompleta y vuelve a ejecutar `run.bat` con conexión |
@@ -242,10 +266,13 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 ```text
 .
 ├── assets/
+│   ├── bobber.glb               # modelo activo (generado, no editar a mano)
+│   ├── Saludo.Evento .blend     # modelo de Blender del club con su rig y las animaciones
+│   ├── Expresiones.*.png, Pupilas.png  # texturas de la cara
+│   ├── ReferenciasBobber.png    # hoja de referencia del personaje
+│   ├── mascota.gltf, mascota.glb  # modelo de pruebas anterior
 │   ├── gesture_recognizer.task
 │   ├── pose_landmarker_lite.task
-│   ├── mascota.gltf
-│   ├── mascota.glb
 │   └── LEEME.txt
 ├── docs/
 │   └── captura-stand.png  # captura del README
@@ -261,6 +288,8 @@ Si la cámara no se recupera, sigue con el stand en modo manual:
 │   └── __main__.py     # comandos de ejecución
 ├── tests/
 │   └── test_logic.py   # pruebas de lógica sin cámara ni ventana
+├── tools/
+│   └── animar_bobber.py  # genera bobber.glb desde el .blend del club (se ejecuta con Blender)
 ├── config.toml
 ├── requirements.txt
 ├── run.bat

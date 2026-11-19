@@ -13,15 +13,16 @@ Bobber es una mascota 3D local para un stand de feria. Detecta presencia y gesto
 3. `GreetingLogic` filtra presencia breve y rearma saludos tras ausencia confirmada.
 4. `GestureLogic` exige gesto estable, aplica cooldown y espera que se libere la mano para repetir.
 5. `ActionArbiter` coordina presencia, gestos y botones/teclado.
-6. Panda3D muestra `assets/mascota.gltf` y reproduce sus clips.
+6. Panda3D muestra `assets/bobber.glb` y reproduce sus clips.
 
 ## Detalles que no debes asumir
 
-- El modelo activo tiene `idle`, `jump` y `walk`; `jump` se usa temporalmente como saludo, pero no es un saludo con la pata.
-- `assets/mascota.glb` es una alternativa sin clips de animación.
+- El modelo activo `assets/bobber.glb` tiene `reposo`, `saludar` y `caminar`. Lo genera `tools/animar_bobber.py` con Blender a partir de `assets/Saludo.Evento .blend`; no lo edites a mano.
+- Las animaciones las hizo el club en Blender (una sola línea de tiempo: 1-44 saludar, 44-116 caminar, 116-138 reposo). El script solo las hornea y exporta; para cambiarlas, se cambian en Blender y se regenera.
+- `assets/mascota.gltf` (`idle`/`jump`/`walk`) y `assets/mascota.glb` son el modelo de pruebas anterior.
 - Palma abierta activa `saludo`; puño cerrado activa `caminar`; los demás gestos están desactivados por configuración.
 - El análisis de cámara es local. No introduzcas servicios en la nube, almacenamiento de fotogramas o reconocimiento de identidad.
-- Si falta un clip, presenta un aviso y conserva el control manual; no inventes animaciones ni sustituyas el modelo.
+- Si falta un clip, presenta un aviso y conserva el control manual. No inventes animaciones ni sustituyas el modelo.
 
 ## Convenciones para cambios
 
