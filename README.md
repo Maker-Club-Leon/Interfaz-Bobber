@@ -76,10 +76,11 @@ Si cambian los fotogramas de cada animación, ajusta `tramos`. El formato es `no
 El script no modifica el `.blend`. Hace esto:
 1. Lee («hornea») el movimiento del rig de control Rigify sobre el esqueleto que deforma el modelo (`Bobber.Esqueleto`, 54 huesos), y separa cada tramo en su propia animación.
 2. Indica cuánto cambia la pose entre el final y el principio de cada tramo y entre tramos, para detectar saltos en los bucles y en las transiciones.
-3. Convierte los materiales «toon» de Blender en colores planos, porque glTF no admite ese sombreado.
-4. Reduce las mallas grandes al 10 % de polígonos: la app anima el modelo en la CPU, y con el modelo completo iría a unos 9 fps; reducido va a cientos. Para exportar sin reducir, añade `decimate=1`.
+3. Aplica en reposo los *Shrinkwrap* que pegan los ojos, la boca y las pupilas a la cara. Si se dejaran para la exportación, se calcularían contra el cuerpo ya posado y parte del ojo quedaría por dentro de la cara (se veía «a rayas»).
+4. Convierte los materiales «toon» de Blender en colores planos, porque glTF no admite ese sombreado.
+5. Reduce las mallas grandes al 10 % de polígonos: la app anima el modelo en la CPU, y con el modelo completo iría a unos 9 fps; reducido va a cientos. Para exportar sin reducir, añade `decimate=1`.
 
-Limitación: en Blender los ojos y la boca cambian de expresión con *drivers*, y eso no se puede exportar a la app. La cara queda fija con la expresión del primer fotograma del primer tramo.
+Limitaciones: en Blender los ojos y la boca cambian de expresión con *drivers*, y eso no se puede exportar a la app; la cara queda fija con la expresión del primer fotograma del primer tramo. La **forma** es la misma que en Blender (las siluetas coinciden en más del 99 %), pero el **aspecto** cambia: la app pinta con luz suave y colores planos en lugar del sombreado «toon» de Blender (bandas de luz y bordes oscuros), y algunos colores, como el de los mofletes, salen más claros.
 
 Las texturas de la cara deben estar en `assets/` junto al `.blend`: `Expresiones.Base.png`, `Expresiones.Boca.png`, `Expresiones.Puesto.png` y `Pupilas.png`. Si falta alguna, el script avisa y exporta sin esa parte de la cara. Después de regenerar, comprueba con `run.bat --selftest` que aparecen las tres animaciones.
 

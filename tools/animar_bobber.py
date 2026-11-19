@@ -57,6 +57,23 @@ def prepare_armature():
     return arm
 
 
+def apply_face_wraps(meshes):
+    """Aplica los Shrinkwrap de la cara (ojos, boca, pupilas) con el esqueleto en reposo.
+
+    En Blender esos planos se pegan a la cara en cada fotograma, después de posar el esqueleto.
+    Si se dejan para la exportación, el exportador los calcula en reposo pero contra el cuerpo ya
+    posado por las animaciones, y parte del plano queda por dentro de la cara (ojo a rayas).
+    Aplicarlos aquí, antes de crear las animaciones y de reducir polígonos, los deja pegados a la
+    cara en reposo; después siguen a la cabeza con el esqueleto como el resto de la malla."""
+    def order(o):                               # las pupilas usan el plano de los ojos como apoyo
+        return 1 if o.name.startswith("Pupila") else 0
+    for o in sorted(meshes, key=order):
+        for mod in [m for m in o.modifiers if m.type == "SHRINKWRAP"]:
+            with bpy.context.temp_override(object=o, active_object=o, selected_objects=[o]):
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+            print(f"   {o.name!r}: Shrinkwrap aplicado en reposo")
+
+
 def skinned_meshes(arm):
     return [o for o in bpy.data.objects if o.type == "MESH"
             and any(m.type == "ARMATURE" and m.object == arm for m in o.modifiers)]
@@ -403,6 +420,7 @@ def main():
     for o, path in missing:
         print(f"   AVISO: falta la textura {path!r}; se omite la malla {o.name!r}")
     meshes = [o for o in meshes if o not in {m for m, _ in missing}]
+    apply_face_wraps(meshes)                    # en reposo y antes de crear las animaciones
     if sampled:
         bake_actions(arm, sampled, in_place=opts.get("en_el_sitio", "1") != "0")
     else:

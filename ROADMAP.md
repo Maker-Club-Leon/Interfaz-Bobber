@@ -75,7 +75,8 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 - [x] Pantalla completa y ventana ajustadas a la pantalla donde está la ventana, también en TVs 4K con escalado al 300 % y con varias pantallas (comprobado con TV 3840x2160 + monitor 1920x1080, 2026-11-16).
 - [x] Teclas `F12` (ayuda del personal con las teclas y los controles, sin salir de la pantalla completa) y `H` (mostrar/ocultar la ayuda de gestos).
 - [x] Logo del Maker Club León como icono de la ventana y de la barra de tareas (`assets/bobber.ico`).
-- [ ] Revisar la textura del ojo izquierdo en Blender (compañeros del club) y regenerar `bobber.glb`.
+- [x] Ojo izquierdo «a rayas» en la app: los *Shrinkwrap* de la cara se calculaban contra el cuerpo ya posado al exportar. El script los aplica ahora en reposo (2026-11-20). El `.blend` estaba bien.
+- [ ] Opcional: imitar en la app el sombreado «toon» de Blender (luz por bandas y contorno) y ajustar colores como los de los mofletes.
 - [ ] Revisar el encuadre/orientación en el monitor del stand.
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
 - [x] Captura del README con el Bobber definitivo.
