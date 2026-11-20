@@ -77,10 +77,14 @@ El script no modifica el `.blend`. Hace esto:
 1. Lee («hornea») el movimiento del rig de control Rigify sobre el esqueleto que deforma el modelo (`Bobber.Esqueleto`, 54 huesos), y separa cada tramo en su propia animación.
 2. Indica cuánto cambia la pose entre el final y el principio de cada tramo y entre tramos, para detectar saltos en los bucles y en las transiciones.
 3. Aplica en reposo los *Shrinkwrap* que pegan los ojos, la boca y las pupilas a la cara. Si se dejaran para la exportación, se calcularían contra el cuerpo ya posado y parte del ojo quedaría por dentro de la cara (se veía «a rayas»).
-4. Convierte los materiales «toon» de Blender en colores planos, porque glTF no admite ese sombreado.
-5. Reduce las mallas grandes al 10 % de polígonos: la app anima el modelo en la CPU, y con el modelo completo iría a unos 9 fps; reducido va a cientos. Para exportar sin reducir, añade `decimate=1`.
+4. Conserva el aspecto de los materiales «toon». glTF 2.0 no puede guardar su sombreado (*Shader to RGB* con rampas de color), así que el `.glb` lleva un color plano de respaldo y el script escribe al lado `bobber.json` con la **tabla de color de cada material según la luz que recibe**. La calcula evaluando el grafo de nodos del material y pasándolo por la vista de color de la escena (AgX), así que los escalones y los tonos son los que pinta Blender. La app usa esa tabla en su propio sombreador. Esas piezas se exportan con solo caras exteriores, para que las de doble capa, como los tirantes, no se vean moteadas.
+5. Guarda en las texturas de ojos, boca y pupilas el color con que las muestra Blender (con su luz y la vista AgX, medido con una captura de *Material Preview*: `luz_cara=1.7`). La app las pinta tal cual. Los PNG de `assets/` no se modifican: se trabaja con una copia en memoria.
+6. Guarda en `bobber.json` la **expresión de la cara** (casilla del atlas de ojos y boca) de cada fotograma de cada animación, que en Blender cambia con *drivers*, y el orden de las capas de la cara (`capas_cara`: blanco del ojo, pupila y contorno con párpado).
+7. Exporta el modelo **completo**, sin reducir polígonos: la app anima el esqueleto en la tarjeta gráfica y va a más de 1000 fps. Si un equipo no pudiera animar en la tarjeta gráfica (el `selftest` lo avisa), se puede exportar reducido con `decimate=0.3`, aunque las piezas finas como los tirantes se estropean.
 
-Limitaciones: en Blender los ojos y la boca cambian de expresión con *drivers*, y eso no se puede exportar a la app; la cara queda fija con la expresión del primer fotograma del primer tramo. La **forma** es la misma que en Blender (las siluetas coinciden en más del 99 %), pero el **aspecto** cambia: la app pinta con luz suave y colores planos en lugar del sombreado «toon» de Blender (bandas de luz y bordes oscuros), y algunos colores, como el de los mofletes, salen más claros.
+`bobber.glb` y `bobber.json` van siempre juntos: regenera los dos a la vez. Sin `bobber.json` la app sigue funcionando, pero con colores planos y la cara fija.
+
+Cómo se ve: la **forma** es la misma que en Blender (las siluetas coinciden en más del 99 %). Los **colores** son los de *Material Preview*: la app lee la tabla de cada material con una luz fija respecto a la cámara que viene de arriba (`[render] light_pitch`), así que, como en Blender, quedan en el tono oscuro las zonas que miran hacia abajo (bajo los mofletes, la barbilla, el ala del casco). Las **expresiones** cambian en los mismos fotogramas que en Blender. Lo único que no se reproduce es el movimiento de las pupilas, que en Blender siguen a unos huesos con *drivers* de objeto.
 
 Las texturas de la cara deben estar en `assets/` junto al `.blend`: `Expresiones.Base.png`, `Expresiones.Boca.png`, `Expresiones.Puesto.png` y `Pupilas.png`. Si falta alguna, el script avisa y exporta sin esa parte de la cara. Después de regenerar, comprueba con `run.bat --selftest` que aparecen las tres animaciones.
 
@@ -183,6 +187,10 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Modo reclamo | `[attract] empty_seconds`, `idle_seconds`, `actions`; `[messages] attract` | `15` s sin nadie, `45` s sin interacción, saludo y caminar, `¡Ven a saludarme!` (`0` = desactivado) |
 | Modo stand (ocultar controles) | `[window] hide_controls` | `true`: en pantalla completa sin botones, cursor ni estado |
 | Evitar suspensión | `[window] keep_awake` | `true`: mientras la app está abierta, Windows no se suspende ni apaga la pantalla |
+| Aspecto de Blender («toon») | `[render] toon`, `toon_ambient`, `toon_gain` | `true` (usa las tablas de color de `bobber.json`), `0.3` (luz mínima), `1.0` (luz según mire hacia la luz) |
+| Dirección de la luz | `[render] light_heading`, `light_pitch` | `10`, `-35`: algo desde la derecha y desde arriba, como en Blender |
+| Contorno de tinta | `[render] ink`, `ink_thickness` | `false` (experimental: con este modelo ensucia tirantes y casco), `1.5` px a 1080p |
+| Fondo | `[background] image`, `top`, `bottom`, `glow`, `glow_strength` | Degradado de cielo a césped (`#7fc4e8` a `#2f7a4f`) con halo `#e9f7ff` al `0.5`. Con `image` (ruta a un `.png`/`.jpg`) se usa esa imagen a pantalla completa, recortada sin deformarse |
 | Icono de la ventana | `[window] icon` | `assets/bobber.ico` (logo del Maker Club León) |
 | Estadísticas del stand | `[stats] enabled`, `path`, `save_every_seconds` | `true`, `estadisticas/bobber.csv`, `60` s |
 

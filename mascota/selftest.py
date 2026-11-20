@@ -93,19 +93,37 @@ def main():
         if not i["animations"]:
             return "(sin animaciones: se usará movimiento provisional)"
 
-    @step("Ventana 3D y carga del modelo (sin mostrar ventana)")
+    @step("Ventana 3D, carga del modelo y fluidez de la animación (sin mostrar ventana)")
     def _():
+        import time
         from panda3d.core import loadPrcFileData
-        loadPrcFileData("", "window-type offscreen\naudio-library-name null")
+        # Igual que la app: la animación del esqueleto se calcula en la tarjeta gráfica
+        loadPrcFileData("", "window-type offscreen\nwin-size 1280 720\naudio-library-name null\n"
+                            "hardware-animated-vertices true\nbasic-shaders-only false")
         from direct.showbase.ShowBase import ShowBase
         from .modelio import load_model
         base = None
         try:
             base = ShowBase()
             node, anims = load_model(base.loader, path)
+            node.reparentTo(base.render)
+            base.render.setShaderAuto()
             base.graphicsEngine.renderFrame()
             mn, mx = node.getTightBounds()
-            return f"tamaño {mx - mn}, clips: {anims}"
+            fps = None
+            if anims:
+                node.loop(anims[0])
+                base.camera.setPos(0, -3 * max(mx - mn), (mn.z + mx.z) / 2)
+                base.camera.lookAt(0, 0, (mn.z + mx.z) / 2)
+                for _ in range(10):
+                    base.taskMgr.step()
+                n, t0 = 0, time.monotonic()
+                while time.monotonic() - t0 < 2.0:
+                    base.taskMgr.step(); n += 1
+                fps = n / 2.0
+                assert fps >= 30, (f"la animación va a {fps:.0f} fps: la tarjeta gráfica no anima el "
+                                   "modelo. Prueba otro equipo o regenera bobber.glb con decimate=0.3 (ver README)")
+            return f"tamaño {mx - mn}, clips: {anims}" + (f", animando a {fps:.0f} fps" if fps else "")
         finally:
             if base is not None:
                 base.destroy()

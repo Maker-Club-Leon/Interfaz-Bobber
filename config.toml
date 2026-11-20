@@ -64,8 +64,22 @@ icon = "assets/bobber.ico" # icono de la ventana y la barra de tareas (logo del 
 font = ""                  # opcional: ruta a un .ttf. Vacío = Segoe UI/Arial de Windows
 
 [render]
-ambient = 0.9              # luz ambiente (el GLB usa materiales "unlit")
-directional = 0.4
+toon = true                # pintar como Blender (Material Preview) con las tablas de color de bobber.json
+toon_ambient = 0.3         # luz mínima de las piezas «toon»: las que no miran a la luz quedan en su tono oscuro
+toon_gain = 1.0            # luz extra cuanto más mira la pieza hacia la luz (los bordes oscuros salen de ambos)
+ink = false                # contorno negro (experimental: con este modelo ensucia tirantes y casco)
+ink_thickness = 1.5        # grosor del contorno en píxeles para una pantalla de 1080 de alto (se escala)
+light_heading = 10.0       # dirección de la luz respecto a la cámara: 0 = de frente, positivo = desde la derecha
+light_pitch = -35.0        # inclinación de la luz: negativo = desde arriba (sombra bajo mofletes y barbilla, como Blender)
+ambient = 0.9              # luz ambiente de las piezas sin tabla (y de todo con toon = false)
+directional = 0.4          # luz directa de las piezas sin tabla (y de todo con toon = false)
+
+[background]               # fondo detrás de Bobber
+image = ""                 # opcional: imagen (.png/.jpg) a pantalla completa; se recorta sin deformarse. Vacío = degradado
+top = "#7fc4e8"            # color de arriba del degradado (cielo)
+bottom = "#2f7a4f"         # color de abajo (césped)
+glow = "#e9f7ff"           # halo suave detrás de Bobber
+glow_strength = 0.5        # intensidad del halo (0 = sin halo)
 
 [messages]
 idle = "Acércate para saludar"

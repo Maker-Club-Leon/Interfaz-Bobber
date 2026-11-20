@@ -10,11 +10,13 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (AmbientLight, CardMaker, DirectionalLight, Texture, TextNode,
                           WindowProperties, loadPrcFileData)
 
+from .background import Background
 from .behavior import ActionArbiter, AttractLogic, GestureLogic, GreetingLogic
 from .config import resolve
 from .detector import GESTURE_LABELS, PresenceDetector
 from .modelio import inspect_glb, load_model
 from .stats import StandStats, column_for
+from .toon import Expressions, apply_decals, apply_toon, load_sidecar
 
 FONTS = ["C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"]
 
@@ -22,7 +24,10 @@ FONTS = ["C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"]
 class MascotaApp(ShowBase):
     def __init__(self, cfg, start_manual=False, windowed=False):
         loadPrcFileData("", "window-title Mascota de la feria\nwin-size 1280 720\n"
-                            "multisamples 4\nframebuffer-multisample 1\naudio-library-name null")
+                            "multisamples 4\nframebuffer-multisample 1\naudio-library-name null\n"
+                            # Animar el esqueleto en la tarjeta gráfica: con el modelo completo
+                            # (~270.000 vértices) pasa de ~8 fps en el procesador a más de 1000.
+                            "hardware-animated-vertices true\nbasic-shaders-only false")
         super().__init__()
         self.cfg, self.msgs = cfg, cfg["messages"]
         self.disableMouse()
@@ -47,6 +52,7 @@ class MascotaApp(ShowBase):
         self._gesture_err_shown = False
         self.detector, self.mode, self.debug, self._last_ui = None, "manual", False, 0.0
         self.staff_help, self.show_hint = False, True       # F12: ayuda del personal; H: ayuda de gestos
+        self._ink = None                                    # filtro de contorno (None = aún sin crear)
         self._detector_started_at = 0.0
         self._last_error, self._last_error_at = "", 0.0
         self._retry_at, self._recovering = None, False     # reintento automático de la cámara
@@ -55,6 +61,12 @@ class MascotaApp(ShowBase):
 
         self._load_font()
         self._build_scene()
+        self.background = None
+        try:                                             # degradado o imagen de [background]
+            self.background = Background(self, cfg["background"])
+            stats_warning = " ".join(x for x in (self.background.warning, stats_warning) if x)
+        except Exception as e:                           # un fondo roto no debe parar la app
+            stats_warning = " ".join(x for x in (f"Fondo desactivado: {e}.", stats_warning) if x)
         if stats_warning:
             self.warning = (self.warning + " " if self.warning else "") + stats_warning
         self._build_ui()
@@ -135,10 +147,24 @@ class MascotaApp(ShowBase):
                 "el gesto que la activa no hará nada.")
         self._frame_model()
         amb, sun = AmbientLight("amb"), DirectionalLight("sun")
-        a, d = self.cfg["render"]["ambient"], self.cfg["render"]["directional"]
+        r = self.cfg["render"]
+        self.render.setShaderAuto()                 # necesario para animar en la tarjeta gráfica
+        self.expressions = None
+        if self.model:
+            sidecar = load_sidecar(path)            # datos que glTF no guarda (ver mascota/toon.py)
+            if r["toon"]:
+                # Aspecto de Blender: los materiales «toon» se pintan con su propia tabla de color
+                # (la que calcula Blender), con la luz que acompaña a la cámara. Los planos de la
+                # cara (ojos, boca, pupilas) llevan ya el color de Blender en la textura y se pintan
+                # tal cual, sin luz.
+                if apply_toon(self.model, sidecar, r["toon_ambient"], r["toon_gain"],
+                              r["light_heading"], r["light_pitch"]):
+                    apply_decals(self.model, sidecar, skip=sidecar.get("toon", {}).get("materiales", {}))
+            self.expressions = Expressions(self.model, sidecar) or None
+        a, d = r["ambient"], r["directional"]
         amb.setColor((a, a, a, 1)); sun.setColor((d, d, d, 1))
         self.render.setLight(self.render.attachNewNode(amb))
-        s = self.render.attachNewNode(sun); s.setHpr(-30, -35, 0); self.render.setLight(s)
+        s = self.render.attachNewNode(sun); s.setHpr(r["light_heading"], r["light_pitch"], 0); self.render.setLight(s)
         self._build_fallback_intervals()
 
     def _find_clip(self, wanted):
@@ -408,6 +434,8 @@ class MascotaApp(ShowBase):
                 if reason:
                     self._run_attract(reason)
         self._save_stats()
+        if self.expressions:                        # ojos y boca según la animación en curso
+            self.expressions.update()
         if now - self._last_ui > 0.1:
             self._last_ui = now
             self._refresh_ui()
@@ -569,11 +597,34 @@ class MascotaApp(ShowBase):
             wp.setIconFilename(Filename.fromOsSpecific(str(icon)))
         if self.kiosk:                                   # sin bordes y ocupando toda esa pantalla
             wp.setUndecorated(True); wp.setOrigin(x, y); wp.setSize(w, h)
+            target_h = h
         else:                                            # ventana de 2/3 de la pantalla, centrada
             ww, wh = w * 2 // 3, h * 2 // 3
             wp.setUndecorated(False); wp.setOrigin(x + (w - ww) // 2, y + (h - wh) // 2); wp.setSize(ww, wh)
+            target_h = wh
         self.win.requestProperties(wp)
         self._apply_controls_visibility()
+        self._apply_ink(target_h)
+
+    def _apply_ink(self, height=None):
+        """Contorno de tinta negro alrededor del personaje ([render] ink), como el «toon» de Blender.
+        El grosor se da para 1080 píxeles de alto y se escala con la ventana (en 4K, el doble)."""
+        r = self.cfg["render"]
+        if not r["ink"] or self._ink is False:
+            return
+        if self._ink is None:
+            try:
+                from direct.filter.CommonFilters import CommonFilters
+                self._ink = CommonFilters(self.win, self.cam)
+            except Exception as e:
+                print("Aviso: sin contorno de tinta:", e)
+                self._ink = False
+                return
+        h = height or self.win.getYSize() or 1080
+        separation = max(1.0, r["ink_thickness"] * h / 1080)
+        if not self._ink.setCartoonInk(separation=separation, color=(0, 0, 0, 1)):
+            print("Aviso: la tarjeta gráfica no admite el contorno de tinta; se dibuja sin él")
+            self._ink = False
 
     def toggle_window(self):
         self.kiosk = not self.kiosk

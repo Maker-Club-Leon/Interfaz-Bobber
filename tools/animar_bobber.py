@@ -11,7 +11,12 @@ Opciones tras «--»: el archivo de salida y luego
   tramos=nombre:inicio-fin[:idavuelta],...  hornea la animación del .blend por tramos.
                                             Sin esta opción se crean animaciones por código.
   en_el_sitio=0|1   1 (por defecto) quita el desplazamiento horizontal del cuerpo.
-  decimate=0.1      proporción de polígonos de las mallas grandes (1 = sin reducir).
+  decimate=1        proporción de polígonos de las mallas grandes (1, por defecto = sin reducir).
+  luz_cara=1.7      luz con la que se calculan los colores de ojos, boca y pupilas (Material Preview).
+  capas_cara=Atlas.Blanco,Pupilas,Atlas.Vacío,Atlas.Boca
+                    orden de dibujo de los planos de la cara, del fondo hacia fuera: el blanco del
+                    ojo, la pupila y el contorno con el párpado (hueco por dentro). Están casi
+                    pegados, así que la app no puede deducirlo de la profundidad.
 
 Qué hace, sin guardar cambios en el .blend:
 1. Con «tramos»: lee fotograma a fotograma la pose del esqueleto de deformación
@@ -21,8 +26,12 @@ Qué hace, sin guardar cambios en el .blend:
    Sin «tramos»: crea tres acciones sencillas por código (X hacia delante, Y hacia la izquierda
    del personaje y Z hacia arriba).
 2. Desconecta el esqueleto de deformación del rig y lo deja en su pose de reposo.
-3. Convierte los materiales «toon» (rampas de color) a colores planos que glTF entiende.
-4. Reduce las mallas grandes y exporta solo el esqueleto y las mallas que deforma.
+3. Materiales «toon» (rampas de color): glTF no puede guardar «Shader to RGB», así que en el .glb
+   quedan con su color plano y, en bobber.json, su tabla de color según la luz (con la vista AgX),
+   que la app usa para pintarlos como Blender. Ojos, boca y pupilas: se guarda en sus texturas el
+   color que muestra Blender. Las imágenes y el .blend originales no se modifican.
+4. Aplica los Shrinkwrap de la cara en reposo (solo en memoria) y exporta solo el esqueleto y las
+   mallas que deforma, sin reducir polígonos salvo que se pida con «decimate».
 """
 import math
 import sys
@@ -79,47 +88,225 @@ def skinned_meshes(arm):
             and any(m.type == "ARMATURE" and m.object == arm for m in o.modifiers)]
 
 
-def toon_color(mat):
-    """Color iluminado de un material «toon» de este modelo.
+def _eval_input(sock, light):
+    """Valor de una entrada de nodo: el del nodo conectado o su valor fijo."""
+    if sock.is_linked:
+        link = sock.links[0]
+        return _eval_output(link.from_node, link.from_socket, light)
+    v = sock.default_value
+    return tuple(v[:3]) if hasattr(v, "__len__") else float(v)
 
-    En estos materiales la rampa solo da la luz (blanco en la zona iluminada) y el color sale de
-    los nodos «Mix» en modo multiplicar con un color fijo: se combinan todos con su factor."""
-    color, found = [1.0, 1.0, 1.0], False
-    for n in mat.node_tree.nodes:
-        if n.type != "MIX" or getattr(n, "blend_type", "") != "MULTIPLY":
-            continue
-        fac = next(i for i in n.inputs if i.enabled and i.name == "Factor")
-        b = next(i for i in n.inputs if i.enabled and i.name == "B")
-        if fac.is_linked or b.is_linked:
-            continue                            # brillos y bordes dependen de la luz: se ignoran
-        f = fac.default_value
-        color = [c * (1 - f + f * bc) for c, bc in zip(color, b.default_value[:3])]
-        found = True
-    return (*color, 1.0) if found else None
+
+def _as_color(v):
+    if v is None:
+        raise ValueError("el color depende solo de texturas")
+    return v if isinstance(v, tuple) else (v, v, v)
+
+
+def _eval_output(node, out, light):
+    """Evalúa (simplificado) la salida de un nodo del sombreado «toon» de este modelo.
+
+    light = color que daría «Shader to RGB»: en estos materiales el canal rojo es la luz principal
+    (rampa de sombra/luz) y el verde, una segunda luz frontal."""
+    t = node.type
+    if t == "SHADERTORGB":
+        return light
+    if t == "SEPARATE_COLOR":
+        c = _as_color(_eval_input(node.inputs[0], light))
+        return c[{"Red": 0, "Green": 1, "Blue": 2}.get(out.name, 0)]
+    if t == "VALTORGB":
+        fac = _eval_input(node.inputs["Fac"], light)
+        fac = fac[0] if isinstance(fac, tuple) else fac
+        return tuple(node.color_ramp.evaluate(fac)[:3])
+    if t == "VALUE":
+        return float(node.outputs[0].default_value)
+    if t == "MATH":
+        vals = [_eval_input(i, light) for i in node.inputs if i.enabled][:3]
+        vals = [v[0] if isinstance(v, tuple) else v for v in vals] + [0.0, 0.0]
+        a, b = vals[0], vals[1]
+        ops = {"ADD": a + b, "SUBTRACT": a - b, "MULTIPLY": a * b, "DIVIDE": a / b if b else 0.0,
+               "GREATER_THAN": float(a > b), "LESS_THAN": float(a < b), "MAXIMUM": max(a, b),
+               "MINIMUM": min(a, b), "ROUND": float(round(a)), "ABSOLUTE": abs(a),
+               "COMPARE": float(abs(a - b) <= vals[2])}
+        if node.operation not in ops:
+            raise ValueError(f"operación Math no soportada: {node.operation}")
+        return ops[node.operation]
+    if t == "TEX_IMAGE":                        # texturas de expresiones: no forman el color base
+        return None
+    if t == "RGB":
+        return tuple(node.outputs[0].default_value[:3])
+    if t == "MIX":
+        ins = [i for i in node.inputs if i.enabled]
+        f = _eval_input(next(i for i in ins if i.name == "Factor"), light)
+        f = f[0] if isinstance(f, tuple) else f
+        a = _eval_input(next(i for i in ins if i.name == "A"), light)
+        b = _eval_input(next(i for i in ins if i.name == "B"), light)
+        if a is None or b is None:              # una rama con texturas: vale la otra entrada
+            return b if a is None else a
+        a, b = _as_color(a), _as_color(b)
+        op = {"MULTIPLY": lambda x, y: x * y, "ADD": lambda x, y: x + y,
+              "LIGHTEN": max, "DARKEN": min, "SUBTRACT": lambda x, y: x - y,
+              "SCREEN": lambda x, y: 1 - (1 - x) * (1 - y)}.get(node.blend_type, lambda x, y: y)
+        return tuple(x * (1 - f) + op(x, y) * f for x, y in zip(a, b))
+    raise ValueError(f"nodo no soportado: {t}")
+
+
+def toon_color(mat, key=1.0, fill=1.0):
+    """Color que muestra un material «toon» de este modelo, evaluando su grafo de nodos.
+
+    key = luz principal (canal rojo de «Shader to RGB»): 1 iluminado, 0 en sombra.
+    fill = segunda luz (canal verde), que ilumina todo el frente del personaje. Con key=1 y
+    fill=1 el resultado coincide con lo que pinta Blender en la vista frontal (comprobado
+    midiendo píxeles de un render: camiseta, mofletes, peto, casco y nariz)."""
+    out = next((n for n in mat.node_tree.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output), None)
+    if not out or not out.inputs["Surface"].is_linked:
+        return None
+    try:
+        c = _as_color(_eval_input(out.inputs["Surface"], (key, fill, 0.0)))
+    except (ValueError, StopIteration, KeyError) as e:
+        print(f"   AVISO: no se pudo evaluar {mat.name!r} ({e}); color gris")
+        return None
+    return (*[min(max(v, 0.0), 1.0) for v in c], 1.0)
+
+
+def display_colors(linear_colors):
+    """Colores tal como los muestra Blender en pantalla (con la vista de color de la escena, p. ej.
+    AgX), en sRGB 0-1. Guarda una imagen de 1 píxel por color con «save_render», que aplica la misma
+    transformación que el visor, y la vuelve a leer."""
+    import os
+    import tempfile
+    n = len(linear_colors)
+    img = bpy.data.images.new("_colores", width=n, height=1, float_buffer=True, alpha=False)
+    px = []
+    for c in linear_colors:
+        px += [c[0], c[1], c[2], 1.0]
+    img.pixels = px
+    path = os.path.join(tempfile.gettempdir(), "bobber_colores.png")
+    scene = bpy.context.scene
+    fmt = scene.render.image_settings
+    old = (fmt.file_format, fmt.color_mode, fmt.color_depth)
+    fmt.file_format, fmt.color_mode, fmt.color_depth = "PNG", "RGB", "8"
+    try:
+        img.save_render(path, scene=scene)
+    finally:
+        fmt.file_format, fmt.color_mode, fmt.color_depth = old
+    shown = bpy.data.images.load(path)
+    shown.colorspace_settings.name = "Non-Color"   # leer los valores tal cual (ya en sRGB)
+    vals = list(shown.pixels)
+    bpy.data.images.remove(shown); bpy.data.images.remove(img)
+    os.remove(path)
+    return [tuple(vals[i * 4: i * 4 + 3]) for i in range(n)]
 
 
 def flatten_materials(meshes):
-    """Sustituye los sombreadores «toon» por un Principled BSDF con su color principal."""
-    done = set()
+    """Sustituye los sombreadores «toon» por un Principled BSDF con el color que muestra Blender.
+
+    El color se calcula evaluando el grafo del material con la luz principal y se pasa por la
+    vista de color de la escena (AgX), para que el tono sea el mismo que se ve en Blender. La app
+    pinta sin corrección gamma, así que se guarda ya en sRGB. Devuelve la proporción media de
+    brillo en sombra (para el sombreado por bandas de la app)."""
+    todo = []
     for o in meshes:
         for slot in o.material_slots:
             m = slot.material
-            if not m or m.name in done or not m.use_nodes:
+            if not m or m in [t[0] for t in todo] or not m.use_nodes:
                 continue
-            done.add(m.name)
-            nodes = m.node_tree.nodes
-            if any(n.type == "BSDF_PRINCIPLED" for n in nodes):
+            if any(n.type == "BSDF_PRINCIPLED" for n in m.node_tree.nodes):
                 continue                        # ya es compatible con glTF
-            color = toon_color(m) or (0.8, 0.8, 0.8, 1.0)
-            # La app ilumina sin corrección gamma: se guarda el color ya en sRGB para que se vea
-            # con el mismo tono que en Blender.
-            color = tuple(c ** (1 / 2.2) for c in color[:3]) + (1.0,)
-            out = next(n for n in nodes if n.type == "OUTPUT_MATERIAL")
-            bsdf = nodes.new("ShaderNodeBsdfPrincipled")
-            bsdf.inputs["Base Color"].default_value = color
-            bsdf.inputs["Roughness"].default_value = 1.0
-            m.node_tree.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
-            print(f"   material {m.name!r}: toon -> color plano {tuple(round(v, 2) for v in color[:3])}")
+            lit = toon_color(m) or (0.8, 0.8, 0.8, 1.0)
+            dark = toon_color(m, key=0.0) or lit
+            todo.append((m, lit, dark))
+    if not todo:
+        return None
+    # Tabla de color según la luz que recibe el punto (0 a LUT_MAX), como la evalúa Blender: en
+    # *Material Preview* la luz es blanca, así que «Shader to RGB» da el mismo valor en rojo y verde.
+    # Las rampas de estos materiales son escalones: la tabla conserva los cortes y la app la usa en
+    # su sombreador para pintar igual que Blender.
+    levels = [LUT_MAX * i / (LUT_SIZE - 1) for i in range(LUT_SIZE)]
+    lut_in = []
+    for m, _lit, _dark in todo:
+        out_node = next(n for n in m.node_tree.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output)
+        for v in levels:
+            try:
+                lut_in.append(_as_color(_eval_input(out_node.inputs["Surface"], (v, v, 0.0))))
+            except (ValueError, StopIteration, KeyError):
+                lut_in.append(_lit[:3])
+    lut_out = display_colors(lut_in)
+    for i, (m, _lit, _dark) in enumerate(todo):
+        TOON_LUTS[m.name] = [[round(c, 4) for c in col] for col in lut_out[i * LUT_SIZE:(i + 1) * LUT_SIZE]]
+    shown = display_colors([t[1] for t in todo] + [t[2] for t in todo])
+    ratios = []
+    for i, (m, _lit, _dark) in enumerate(todo):
+        color, shadow = shown[i], shown[len(todo) + i]
+        ratio = sum(shadow) / max(sum(color), 1e-6)
+        if ratio < 0.99:                        # materiales que sí reciben luz
+            ratios.append(ratio)
+        # Solo caras exteriores (glTF «doubleSided» = false): algunas piezas con grosor, como los
+        # tirantes, tienen la cara interior casi pegada a la exterior y, con el sombreado «toon»
+        # de la app, las dos se pisan y salen moteadas. Los planos de la cara no pasan por aquí.
+        m.use_backface_culling = True
+        nodes = m.node_tree.nodes
+        out = next(n for n in nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output)
+        bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+        bsdf.inputs["Base Color"].default_value = (*color, 1.0)
+        bsdf.inputs["Roughness"].default_value = 1.0
+        m.node_tree.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+        print(f"   material {m.name!r}: color plano {tuple(round(v, 2) for v in color)}; "
+              f"en sombra al {ratio:.0%}")
+    return sum(ratios) / len(ratios) if ratios else None
+
+
+def bake_face_textures(meshes, light):
+    """Ojos, boca y pupilas como los muestra Blender: guarda en sus texturas el color ya visto.
+
+    Son planos con una imagen (Principled BSDF). En *Material Preview* Blender los ilumina y les
+    aplica la vista de color (AgX), que aclara el párpado y el iris; la app los pinta sin luz, así
+    que aquí se calcula ese color para cada píxel (luz «light», medida con tu captura: 1,7) y se
+    sustituye la imagen por una copia en memoria. Los PNG de assets no se tocan."""
+    import os
+    import tempfile
+    import numpy as np
+    done = {}
+    for o in meshes:
+        for slot in o.material_slots:
+            m = slot.material
+            if not (m and m.use_nodes and any(n.type == "BSDF_PRINCIPLED" for n in m.node_tree.nodes)):
+                continue
+            for n in m.node_tree.nodes:
+                if n.type != "TEX_IMAGE" or not n.image or n.image.size[0] == 0:
+                    continue
+                src = n.image
+                key = src.as_pointer()
+                if key not in done and src not in done.values():
+                    w, h = src.size
+                    px = np.empty(w * h * 4, dtype=np.float32)
+                    src.pixels.foreach_get(px)      # imagen de 8 bits: valores sRGB tal cual
+                    px = px.reshape(-1, 4)
+                    rgb = px[:, :3]
+                    lin = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+                    tmp = bpy.data.images.new("_calco", width=w, height=h, float_buffer=True, alpha=True)
+                    tmp.alpha_mode = "STRAIGHT"
+                    tmp.pixels.foreach_set(np.concatenate([lin * light, px[:, 3:]], axis=1).ravel())
+                    path = os.path.join(tempfile.gettempdir(), f"bobber_{bpy.path.clean_name(src.name)}.png")
+                    scene = bpy.context.scene
+                    fmt = scene.render.image_settings
+                    old = (fmt.file_format, fmt.color_mode, fmt.color_depth)
+                    fmt.file_format, fmt.color_mode, fmt.color_depth = "PNG", "RGBA", "8"
+                    try:
+                        tmp.save_render(path, scene=scene)
+                    finally:
+                        fmt.file_format, fmt.color_mode, fmt.color_depth = old
+                    bpy.data.images.remove(tmp)
+                    shown = bpy.data.images.load(path)
+                    shown.pack()                    # dentro del .glb; el archivo temporal sobra
+                    os.remove(path)
+                    name = src.name
+                    src.name = name + ".original"   # solo en memoria: el .blend no se guarda
+                    shown.name = name               # mismo nombre de textura en el .glb
+                    shown.alpha_mode = src.alpha_mode
+                    done[key] = shown
+                    print(f"   textura {name!r}: color de Blender guardado (luz {light})")
+                n.image = done.get(key, src)
 
 
 def missing_texture_meshes(meshes):
@@ -252,6 +439,37 @@ def act_caminar(arm, n=32):
     return n
 
 
+EXPRESSIONS = {}      # clip -> material -> [[x, y] por fotograma]: casilla del atlas de ojos/boca
+TOON_LUTS = {}        # material -> [[r, g, b] sRGB] para luz de 0 a LUT_MAX (lo que pinta Blender)
+LUT_SIZE, LUT_MAX = 64, 1.2
+
+
+def face_offsets():
+    """Desplazamiento actual del atlas de cada material de la cara (nodo Mapping movido por drivers
+    desde los controles de expresión del rig). glTF no puede animarlo; la app lo aplica."""
+    out = {}
+    for m in bpy.data.materials:
+        if not (m.use_nodes and m.node_tree and m.node_tree.animation_data):
+            continue
+        if not any("Mapping" in d.data_path for d in m.node_tree.animation_data.drivers):
+            continue
+        mp = next((n for n in m.node_tree.nodes if n.type == "MAPPING"), None)
+        if mp:
+            loc = mp.inputs["Location"].default_value
+            out[m.name] = [round(loc[0], 4), round(loc[1], 4)]
+    return out
+
+
+def write_sidecar(out, extra):
+    """Escribe <modelo>.json con lo que glTF no puede guardar (expresiones de la cara, sombreado)."""
+    import json
+    import os
+    path = os.path.splitext(out)[0] + ".json"
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"fps": FPS, **extra}, f, ensure_ascii=False, indent=1)
+    print("DATOS EXTRA", path)
+
+
 def sample_rig(arm, segments):
     """Lee la animación que ya trae el .blend (en el rig de control) sobre el esqueleto simple.
 
@@ -261,7 +479,7 @@ def sample_rig(arm, segments):
     scene = bpy.context.scene
     data = {}
     for name, start, end, pingpong in segments:
-        frames = []
+        frames, faces = [], []
         for f in range(start, end + 1):
             scene.frame_set(f)
             pose = {}
@@ -270,9 +488,12 @@ def sample_rig(arm, segments):
                 loc, rot, scl = local.decompose()
                 pose[pb.name] = (loc.copy(), rot.copy(), scl.copy())
             frames.append(pose)
+            faces.append(face_offsets())
         if pingpong:                            # ida y vuelta: termina igual que empieza
             frames = frames + frames[-2::-1]
+            faces = faces + faces[-2::-1]
         data[name] = frames
+        EXPRESSIONS[name] = {m: [fr[m] for fr in faces] for m in (faces[0] if faces else {})}
         # ¿Encaja el final con el principio? Importa para los clips que la app repite en bucle.
         jump = max(math.degrees(frames[0][b][1].rotation_difference(frames[-1][b][1]).angle) for b in frames[0])
         worst = max(frames[0], key=lambda b: frames[0][b][1].rotation_difference(frames[-1][b][1]).angle)
@@ -365,9 +586,10 @@ def export(arm, meshes, out, opts):
         o.select_set(True)
     if not arm.select_get():
         raise RuntimeError(f"No se pudo seleccionar {ARMATURE!r} para exportarlo")
-    # Por defecto, 10 % de polígonos en las mallas grandes: a tamaño de pantalla apenas se nota y
-    # la app pasa de ~9 a cientos de fotogramas por segundo. «decimate=1» exporta sin reducir.
-    ratio = float(opts.get("decimate", "0.1"))
+    # Por defecto no se reduce nada: la app anima el esqueleto en la tarjeta gráfica y el modelo
+    # completo va a cientos de fps. Reducir (p. ej. «decimate=0.3») estropea piezas finas como
+    # los tirantes; úsalo solo si el equipo no puede animar en la tarjeta gráfica.
+    ratio = float(opts.get("decimate", "1"))
     if ratio < 1.0:                             # menos polígonos: la app anima la malla en la CPU
         for o in meshes:
             if len(o.data.vertices) <= 20000:
@@ -380,6 +602,14 @@ def export(arm, meshes, out, opts):
             with bpy.context.temp_override(object=o, active_object=o, selected_objects=[o]):
                 bpy.ops.object.modifier_move_to_index(modifier=mod.name, index=0)
                 bpy.ops.object.modifier_apply(modifier=mod.name)
+            if opts.get("suavizar", "1") != "0":
+                # Normales suaves tras reducir: con el sombreado «toon» de la app, las normales
+                # irregulares de la malla reducida hacen que el corte de luz salte de triángulo
+                # en triángulo (tirantes «a rayas»).
+                if o.data.has_custom_normals:
+                    with bpy.context.temp_override(object=o, active_object=o, selected_objects=[o]):
+                        bpy.ops.mesh.customdata_custom_splitnormals_clear()
+                o.data.shade_smooth()
             print(f"   {o.name!r}: {before} -> {len(o.data.vertices)} vértices ({ratio:.0%})")
     bpy.context.view_layer.objects.active = arm
     # El exportador importa «ctypes» solo para la compresión Draco, que no se usa. En equipos donde
@@ -416,6 +646,7 @@ def main():
     meshes = skinned_meshes(arm)
     print("Mallas:", [o.name for o in meshes])
     flatten_materials(meshes)
+    bake_face_textures(meshes, float(opts.get("luz_cara", "1.7")))
     missing = missing_texture_meshes(meshes)
     for o, path in missing:
         print(f"   AVISO: falta la textura {path!r}; se omite la malla {o.name!r}")
@@ -426,6 +657,9 @@ def main():
     else:
         build_actions(arm)
     export(arm, meshes, out, opts)
+    layers = [x for x in opts.get("capas_cara", "Atlas.Blanco,Pupilas,Atlas.Vacío,Atlas.Boca").split(",") if x]
+    write_sidecar(out, {"expresiones": EXPRESSIONS, "capas_cara": layers,
+                        "toon": {"max": LUT_MAX, "materiales": TOON_LUTS}})
 
 
 main()

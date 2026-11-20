@@ -24,7 +24,7 @@ La aplicación de escritorio funciona como prototipo integrado: presenta la masc
 ### Limitaciones conocidas
 
 - En `caminar` los pies apenas se despegan del suelo (así está animado en Blender). El reposo dura 1,9 s y se reproduce de ida y vuelta; al empezar a saludar desde el reposo hay un pequeño cambio de postura (unos 24°).
-- El modelo exportado tiene el 10 % de polígonos del original y colores planos en lugar del sombreado «toon» de Blender. Las expresiones de la cara (atlas de ojos y boca), que en Blender cambian con drivers, quedan fijas en la expresión del primer fotograma.
+- El modelo se exporta completo y la app lo anima en la tarjeta gráfica (más de 1000 fps en el PC de desarrollo); el `selftest` avisa si un equipo baja de 30 fps. Los materiales «toon» se pintan con las tablas de color que calcula Blender (`bobber.json`) y las expresiones de la cara cambian fotograma a fotograma como en Blender. Falta el movimiento de las pupilas (drivers de objeto).
 - La aplicación está ajustada para una cámara y una mano. Los tiempos de análisis y umbrales deben calibrarse en el stand real, con su iluminación y distancia.
 - El rendimiento puede variar porque pose y gesto se analizan en CPU sobre cada fotograma.
 - El `selftest` y el modo de calibración necesitan acceso a la cámara; no sustituyen la prueba final en el ordenador y la cámara del stand.
@@ -69,14 +69,17 @@ El stand usará uno de los portátiles del club, preparado ese día y con alguie
 ## Prioridad 2 — mejorar la interacción
 
 - [x] Bobber definitivo con las animaciones del club (`Saludo.Evento .blend`: saludar 1-44, caminar 44-116, reposo 116-138), horneadas y exportadas con `tools/animar_bobber.py`; `[animations]` y documentación actualizados (2026-11-19).
-- [ ] Opcional: expresiones de la cara animadas (ojos y boca del atlas) y un caminar con pasos más marcados.
+- [x] Expresiones de la cara animadas (ojos y boca del atlas), leídas de los drivers de Blender (2026-11-20).
+- [ ] Opcional: movimiento de las pupilas y un caminar con pasos más marcados.
 - [x] Añadir pruebas lógicas específicas para `GestureLogic` y `ActionArbiter` (cooldown, gesto sostenido, liberación y prioridad manual).
 - [x] Fijar `heading_degrees` para que la mascota mire al público (`-90` con `bobber.glb`; era `180` con el modelo de pruebas).
 - [x] Pantalla completa y ventana ajustadas a la pantalla donde está la ventana, también en TVs 4K con escalado al 300 % y con varias pantallas (comprobado con TV 3840x2160 + monitor 1920x1080, 2026-11-16).
 - [x] Teclas `F12` (ayuda del personal con las teclas y los controles, sin salir de la pantalla completa) y `H` (mostrar/ocultar la ayuda de gestos).
 - [x] Logo del Maker Club León como icono de la ventana y de la barra de tareas (`assets/bobber.ico`).
 - [x] Ojo izquierdo «a rayas» en la app: los *Shrinkwrap* de la cara se calculaban contra el cuerpo ya posado al exportar. El script los aplica ahora en reposo (2026-11-20). El `.blend` estaba bien.
-- [ ] Opcional: imitar en la app el sombreado «toon» de Blender (luz por bandas y contorno) y ajustar colores como los de los mofletes.
+- [x] Aspecto de Blender en la app (`[render] toon`): tablas de color de cada material «toon» calculadas de su grafo de nodos con la vista AgX, luz desde arriba como en *Material Preview*, tirantes sin motas (solo caras exteriores) y ojos, boca y pupilas con el color de Blender (2026-11-20).
+- [x] Fondo configurable (`[background]`): degradado con halo detrás de Bobber o una imagen a pantalla completa sin deformar (2026-11-20).
+- [ ] Opcional: contorno de tinta (`[render] ink`) más limpio; el filtro de Panda3D remarca de más tirantes y casco.
 - [ ] Revisar el encuadre/orientación en el monitor del stand.
 - [x] Añadir una captura del modo stand al README (`docs/captura-stand.png`, render de la app sin ventana visible).
 - [x] Captura del README con el Bobber definitivo.
