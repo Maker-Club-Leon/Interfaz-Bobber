@@ -75,7 +75,7 @@ ambient = 0.9              # luz ambiente de las piezas sin tabla (y de todo con
 directional = 0.4          # luz directa de las piezas sin tabla (y de todo con toon = false)
 
 [background]               # fondo detrás de Bobber
-image = ""                 # opcional: imagen (.png/.jpg) a pantalla completa; se recorta sin deformarse. Vacío = degradado
+image = "assets/fondo.png"                 # opcional: imagen (.png/.jpg) a pantalla completa; se recorta sin deformarse. Vacío = degradado
 top = "#7fc4e8"            # color de arriba del degradado (cielo)
 bottom = "#2f7a4f"         # color de abajo (césped)
 glow = "#e9f7ff"           # halo suave detrás de Bobber
