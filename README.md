@@ -171,7 +171,7 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 
 | Ajuste | Sección y clave | Valor inicial |
 | --- | --- | --- |
-| Modelo y orientación | `[model] path`, `heading_degrees` | `assets/bobber.glb`, `-90` (de frente) |
+| Modelo y orientación | `[model] path`, `heading_degrees`, `tilt_degrees` | `assets/bobber.glb`, `-90` (de frente), `8` (algo inclinado hacia el público) |
 | Clips del personaje | `[animations] reposo`, `saludo`, `caminar` | `reposo`, `saludar`, `caminar` mediante alias (también reconoce los del modelo de pruebas) |
 | Cámara | `[camera] index`, `width`, `height` | `0`, `640`, `480` |
 | Reintento tras fallo de cámara | `[camera] retry_seconds` | `30` s (`0` = no reintentar) |
@@ -190,11 +190,11 @@ Edita `config.toml` y reinicia la aplicación para aplicar los cambios.
 | Aspecto de Blender («toon») | `[render] toon`, `toon_ambient`, `toon_gain` | `true` (usa las tablas de color de `bobber.json`), `0.3` (luz mínima), `1.0` (luz según mire hacia la luz) |
 | Dirección de la luz | `[render] light_heading`, `light_pitch` | `10`, `-35`: algo desde la derecha y desde arriba, como en Blender |
 | Contorno de tinta | `[render] ink`, `ink_thickness` | `false` (experimental: con este modelo ensucia tirantes y casco), `1.5` px a 1080p |
-| Fondo | `[background] image`, `top`, `bottom`, `glow`, `glow_strength` | Degradado de cielo a césped (`#7fc4e8` a `#2f7a4f`) con halo `#e9f7ff` al `0.5`. Con `image` (ruta a un `.png`/`.jpg`) se usa esa imagen a pantalla completa, recortada sin deformarse |
+| Fondo | `[background] image`, `top`, `bottom`, `glow`, `glow_strength` | Imagen `assets/fondo.png` a pantalla completa, recortada sin deformarse. Con `image = ""` se usa un degradado de cielo a césped (`#7fc4e8` a `#2f7a4f`) con halo `#e9f7ff` al `0.5`. Si la imagen falta, se usa el degradado con un aviso |
 | Icono de la ventana | `[window] icon` | `assets/bobber.ico` (logo del Maker Club León) |
 | Estadísticas del stand | `[stats] enabled`, `path`, `save_every_seconds` | `true`, `estadisticas/bobber.csv`, `60` s |
 
-`heading_degrees` gira el modelo sobre su eje vertical. Con `bobber.glb`, `-90` lo deja mirando al público, porque en Blender Bobber mira hacia +X. Con el modelo de pruebas `mascota.gltf` es `180`. Si cambias de modelo, prueba `0`, `90`, `180` y `-90`.
+`heading_degrees` gira el modelo sobre su eje vertical. Con `bobber.glb`, `-90` lo deja mirando al público, porque en Blender Bobber mira hacia +X. Con el modelo de pruebas `mascota.gltf` es `180`. Si cambias de modelo, prueba `0`, `90`, `180` y `-90`. `tilt_degrees` lo inclina hacia el público (positivo) o hacia atrás (negativo) girando sobre su centro; `0` lo deja recto.
 
 Sube `min_shoulder_width` para que solo cuente quien se acerque más a la cámara. Si hay falsos gestos, sube `min_confidence` o `confirm_seconds`. Para ver valores en directo, activa la calibración con `C`.
 

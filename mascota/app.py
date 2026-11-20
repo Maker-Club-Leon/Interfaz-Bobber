@@ -122,7 +122,8 @@ class MascotaApp(ShowBase):
     # ---------- escena y modelo ----------
     def _build_scene(self):
         self.pivot = self.render.attachNewNode("pivot")     # lo que se anima en el modo provisional
-        self.holder = self.pivot.attachNewNode("holder")
+        self.tilt = self.pivot.attachNewNode("tilt")          # inclinación hacia el público
+        self.holder = self.tilt.attachNewNode("holder")
         self.model, anims, self.warning = None, [], ""
         path = resolve(self.cfg["model"]["path"])
         if not path.exists():
@@ -183,13 +184,15 @@ class MascotaApp(ShowBase):
         if not self.model:
             return
         self.holder.setH(self.cfg["model"]["heading_degrees"])
-        bounds = self.model.getTightBounds(self.pivot)
+        bounds = self.model.getTightBounds(self.tilt)
         if not bounds:
             self.warning = "El modelo no tiene geometría visible."
             return
         mn, mx = bounds
         size, center = mx - mn, (mx + mn) / 2
         self.holder.setPos(-center)
+        # Positivo = la cabeza se acerca a la cámara (gira sobre el centro del modelo).
+        self.tilt.setP(float(self.cfg["model"].get("tilt_degrees", 0.0)))
         self.height = max(size.z, 1e-3)
         import math
         vfov = math.radians(self.camLens.getVfov())

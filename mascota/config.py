@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULTS = {
-    "model": {"path": "assets/bobber.glb", "heading_degrees": -90},
+    "model": {"path": "assets/bobber.glb", "heading_degrees": -90, "tilt_degrees": 8.0},
     "animations": {"reposo": ["reposo", "idle"],
                     "saludo": ["saludo", "saludar", "jump", "waving"],
                     "caminar": ["caminar", "walk", "walking"]},
@@ -29,7 +29,7 @@ DEFAULTS = {
     "render": {"ambient": 0.9, "directional": 0.4, "toon": True, "toon_ambient": 0.3,
                "toon_gain": 1.0, "ink": False, "ink_thickness": 1.5,
                "light_heading": 10.0, "light_pitch": -35.0},
-    "background": {"image": "", "top": "#7fc4e8", "bottom": "#2f7a4f", "glow": "#e9f7ff",
+    "background": {"image": "assets/fondo.png", "top": "#7fc4e8", "bottom": "#2f7a4f", "glow": "#e9f7ff",
                    "glow_strength": 0.5},
     "messages": {"idle": "Acércate para saludar", "hello": "¡Hola!",
                  "after": "¡Disfruta de la feria!", "manual": "Modo manual",
